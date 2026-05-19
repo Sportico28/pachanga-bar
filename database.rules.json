@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "whitelist": {
+      ".read": "auth != null",
+      "$slug": {
+        ".write": "auth.token.email == 'bram.denyn@gmail.com'"
+      }
+    },
+
+    "access-requests": {
+      ".read": "auth.token.email == 'bram.denyn@gmail.com'",
+      "$slug": {
+        ".write": "auth != null && ((newData.exists() && newData.child('uid').val() == auth.uid && newData.child('email').val() == auth.token.email) || auth.token.email == 'bram.denyn@gmail.com')"
+      }
+    },
+
+    "voorstellen": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "logboek": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
