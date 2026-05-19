@@ -138,15 +138,6 @@
   }
   .related-item:hover { color: var(--accent); }
 
-  /* Watermerk achtergrond (alleen op homescreen, niet artikel) */
-  .watermark-bg {
-    position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    opacity: 0.5; overflow: hidden;
-  }
-  .watermark-bg svg { position: absolute; }
-  .watermark-bg .bull-tl { top: -120px; left: -160px; width: 460px; }
-  .watermark-bg .bull-br { bottom: -120px; right: -160px; width: 460px; transform: scaleX(-1); }
-
   /* Login & Loading */
   .full-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
   .login-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; }
@@ -187,6 +178,53 @@
   .bar28-logo { display: block; }
   .bar28-logo-sm { width: 100px; height: auto; aspect-ratio: 682 / 151; }
   .bar28-logo-lg { width: 280px; height: auto; aspect-ratio: 682 / 151; }
+
+  /* No-access view */
+  .no-access { text-align: center; max-width: 360px; }
+  .no-access h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+  .no-access p { color: var(--fg-muted); line-height: 1.5; margin-bottom: 22px; }
+  .access-form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; margin: 0 auto; }
+  .access-form input, .access-form textarea {
+    padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
+    color: var(--fg); font-size: 16px; font-family: inherit; resize: vertical; min-height: 44px;
+  }
+  .access-form textarea { min-height: 80px; }
+  .access-form input:focus, .access-form textarea:focus { outline: none; border-color: var(--accent); }
+  .btn-primary { padding: 14px 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--fg); font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.04em; font-family: inherit; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { padding: 10px 14px; background: transparent; border: 1px solid var(--border); border-radius: 999px; color: var(--fg-muted); font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--fg); }
+  .btn-danger { padding: 10px 14px; background: transparent; border: 1px solid var(--danger); border-radius: 999px; color: var(--danger); font-size: 13px; cursor: pointer; font-family: inherit; }
+  .btn-danger:hover { background: var(--danger); color: var(--fg); }
+
+  /* Admin view */
+  .admin-section { padding: 20px; }
+  .admin-section h2 { font-size: 16px; font-weight: 700; color: var(--accent); margin-top: 24px; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .admin-section h2:first-child { margin-top: 0; }
+  .admin-card {
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; margin-bottom: 10px;
+  }
+  .admin-card .row1 { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .admin-card .name { font-size: 15px; font-weight: 700; }
+  .admin-card .email { font-size: 13px; color: var(--fg-muted); }
+  .admin-card .reason { font-size: 13px; color: var(--fg); margin: 8px 0 12px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; line-height: 1.4; }
+  .admin-card .meta { font-size: 11px; color: var(--fg-dim); margin-bottom: 10px; }
+  .admin-card .actions { display: flex; gap: 8px; }
+  .role-pill { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .role-pill.admin { background: var(--accent); color: var(--fg); }
+  .role-pill.staff { background: rgba(255,255,255,0.05); color: var(--fg-muted); }
+  .empty-admin { padding: 30px 20px; text-align: center; color: var(--fg-dim); font-size: 14px; }
+
+  .admin-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--fg); padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .admin-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .header-tabs { display: flex; gap: 4px; }
 </style>
 </head>
 <body>
@@ -194,23 +232,14 @@
 <!-- Officieel Bar28 logo, eenmaal als symbol gedefinieerd, hergebruikt via <use> -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs><symbol id="bar28-logo" viewBox="0 0 682 151"><g transform="matrix(1,0,0,1,-619.003,-453.608)"><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M760.046,398.839C763.885,393.797 766.193,387.53 766.193,380.718C766.193,364.171 752.732,350.71 736.186,350.71L665.122,350.71C648.575,350.71 635.115,364.171 635.115,380.718C635.115,387.53 637.422,393.797 641.261,398.839C637.422,403.882 635.115,410.15 635.115,416.962C635.115,433.508 648.575,446.968 665.122,446.968L736.186,446.968C752.732,446.968 766.193,433.508 766.193,416.962C766.193,410.15 763.885,403.882 760.046,398.839ZM659.137,401.578L685.273,401.578C689.569,401.578 693.05,405.059 693.05,409.355L693.05,409.998L734.121,405.432C736.319,405.189 738.517,405.893 740.166,407.367C741.814,408.843 742.755,410.95 742.755,413.162C742.755,415.374 741.814,417.481 740.166,418.957C738.517,420.429 736.319,421.133 734.121,420.89L693.05,416.327L693.05,416.968C693.05,421.264 689.569,424.746 685.273,424.746L659.137,424.746C657.536,424.746 656.241,423.451 656.241,421.85C656.241,420.249 657.536,418.954 659.137,418.954L675.312,418.954L675.312,416.058L659.137,416.058C657.536,416.058 656.241,414.763 656.241,413.162C656.241,411.561 657.536,410.265 659.137,410.265L675.312,410.265L675.312,407.371L659.137,407.371C657.536,407.371 656.241,406.075 656.241,404.474C656.241,402.874 657.536,401.578 659.137,401.578ZM742.839,376.256C738.498,384.483 729.963,389.633 720.658,389.633L702.571,389.633C698.922,389.633 695.965,386.674 695.965,383.026L695.965,382.526L666.205,386.494C664.033,386.782 661.838,386.121 660.19,384.678C658.541,383.233 657.594,381.146 657.594,378.954C657.594,376.762 658.541,374.675 660.19,373.23C661.838,371.788 664.032,371.127 666.205,371.415L695.965,375.381L695.965,375.272C695.965,374.107 696.908,373.163 698.073,373.163L740.972,373.163C741.714,373.163 742.398,373.55 742.779,374.183C743.161,374.817 743.184,375.603 742.839,376.256Z" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M631.431,446.821L500.353,446.821L500.353,416.962C500.353,400.416 513.813,386.955 530.359,386.955L601.424,386.955C604.863,386.955 607.662,384.157 607.662,380.717C607.662,377.278 604.863,374.48 601.424,374.48L500.352,374.48L500.352,350.71L601.424,350.71C617.97,350.71 631.431,364.171 631.431,380.717C631.431,397.264 617.97,410.725 601.424,410.725L530.359,410.725C526.92,410.725 524.122,413.523 524.122,416.962L524.122,423.051L631.431,423.051L631.431,446.821Z" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M209.219,398.769C213.022,393.74 215.307,387.502 215.307,380.725C215.307,364.178 201.846,350.717 185.3,350.717L175.931,350.717L175.926,350.737C161.468,350.743 132.526,350.735 107.97,350.723L107.97,350.71L84.199,350.71L84.199,446.829L107.97,446.829L107.97,446.815C132.517,446.803 161.443,446.795 175.905,446.802L185.3,446.821C201.846,446.821 215.307,433.36 215.307,416.814C215.307,410.037 213.022,403.798 209.219,398.769ZM107.97,423.045L107.97,410.732L185.3,410.732C185.645,410.732 185.98,410.692 186.322,410.68C189.274,411.172 191.537,413.725 191.537,416.814C191.537,420.23 188.777,423.013 185.37,423.051C185.294,423.049 185.217,423.048 185.14,423.047L181.48,423.037C179.037,423.034 175.546,423.031 171.359,423.03C168.591,423.029 165.521,423.029 162.245,423.029C155.615,423.029 148.149,423.03 140.685,423.033C128.595,423.036 116.507,423.041 107.97,423.045ZM191.537,380.725C191.537,383.814 189.274,386.367 186.322,386.858C185.98,386.847 185.645,386.806 185.3,386.806L107.97,386.806L107.97,374.494C116.507,374.497 128.595,374.503 140.684,374.507C148.14,374.509 155.595,374.51 162.218,374.51C170.464,374.51 177.419,374.509 181.48,374.502L185.141,374.492C185.218,374.491 185.295,374.489 185.371,374.488C188.778,374.526 191.537,377.309 191.537,380.725Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M492.195,380.533C492.195,363.987 478.733,350.525 462.186,350.525L452.816,350.525L452.812,350.545C435.932,350.552 399.312,350.541 372.978,350.525L361.086,350.519L361.086,446.637L384.856,446.637L384.856,410.541L462.186,410.541C462.251,410.541 462.315,410.531 462.381,410.531C465.728,410.636 468.422,413.376 468.422,416.748L468.422,446.829L492.193,446.829L492.193,416.748C492.193,409.943 489.889,403.681 486.058,398.642C489.891,393.602 492.195,387.339 492.195,380.533ZM468.424,380.533C468.424,383.906 465.728,386.646 462.379,386.751C462.314,386.75 462.251,386.741 462.186,386.741L462.186,386.77L384.856,386.77L384.856,374.302C393.393,374.306 405.482,374.311 417.57,374.315C425.026,374.317 432.481,374.318 439.104,374.318C447.35,374.318 454.303,374.316 458.366,374.31L462.026,374.3C462.103,374.3 462.181,374.298 462.258,374.296C465.664,374.334 468.424,377.118 468.424,380.533Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M354.523,446.829L354.523,380.718C354.523,364.172 341.061,350.711 324.515,350.711L253.451,350.711C236.905,350.711 223.443,364.172 223.443,380.718L223.443,446.829L247.214,446.829L247.214,410.654L330.752,410.654L330.752,446.829L354.523,446.829ZM330.752,380.718L330.752,386.884L247.214,386.884L247.214,380.718C247.214,377.279 250.011,374.481 253.451,374.481L324.515,374.481C327.954,374.481 330.752,377.279 330.752,380.718Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><rect x="84.199" y="477.318" width="681.995" height="23.769" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g></g></symbol></defs></svg>
 
-<!-- Watermerk -->
-<div class="watermark-bg" id="watermark">
-  <svg class="bull-tl" viewBox="0 0 200 200" fill="none">
-    <path d="M 20 100 Q 40 30 100 30 Q 160 30 180 100" stroke="#171717" stroke-width="40" stroke-linecap="round"/>
-    <path d="M 40 150 Q 100 200 160 150" stroke="#171717" stroke-width="40" stroke-linecap="round"/>
-  </svg>
-  <svg class="bull-br" viewBox="0 0 200 200" fill="none">
-    <path d="M 20 100 Q 40 30 100 30 Q 160 30 180 100" stroke="#171717" stroke-width="40" stroke-linecap="round"/>
-    <path d="M 40 150 Q 100 200 160 150" stroke="#171717" stroke-width="40" stroke-linecap="round"/>
-  </svg>
-</div>
-
 <!-- HEADER -->
 <header class="header" id="header" style="display:none;">
-  <svg class="bar28-logo bar28-logo-sm" aria-label="Bar28"><use href="#bar28-logo"/></svg>
+  <svg class="bar28-logo bar28-logo-sm" aria-label="Bar28" style="cursor:pointer" onclick="showApp()"><use href="#bar28-logo"/></svg>
   <div class="header-actions">
-    <button class="lang-switch">NL</button>
+    <button class="admin-btn" id="adminBtn" onclick="showAdmin()" style="display:none;" title="Beheer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span id="adminBadge" style="display:none;background:var(--accent);color:var(--fg);border-radius:999px;padding:0 6px;font-size:10px;font-weight:800;">0</span>
+    </button>
     <div class="user-chip" id="userChip" onclick="logout()" style="display:none;">
       <span class="dot"></span>
       <span id="userEmail"></span>
@@ -259,6 +288,38 @@
   <div class="list" id="resultList"></div>
 </div>
 
+<!-- NO ACCESS VIEW -->
+<div class="full-screen" id="noAccessView" style="display:none;">
+  <div class="login-logo">
+    <svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg>
+  </div>
+  <div class="no-access" id="noAccessContent">
+    <h2>Nog geen toegang</h2>
+    <p>Je e-mail (<strong id="noAccessEmail"></strong>) staat nog niet in de Bar28 personeelslijst. Vraag toegang aan en Bram ontvangt je aanvraag.</p>
+    <form class="access-form" id="accessRequestForm" onsubmit="submitAccessRequest(event)">
+      <input type="text" id="reqName" placeholder="Je naam" required>
+      <textarea id="reqReason" placeholder="Korte reden (bv. 'nieuwe medewerker, start deze week')" required></textarea>
+      <button class="btn-primary" type="submit" id="reqBtn">Aanvraag versturen</button>
+    </form>
+    <div class="login-msg" id="accessMsg" style="display:none;margin:16px auto 0;"></div>
+    <button class="btn-secondary" style="margin-top:24px" onclick="logout()">Uitloggen</button>
+  </div>
+</div>
+
+<!-- ADMIN VIEW -->
+<div class="detail" id="adminView" style="display:none;">
+  <div class="back" onclick="showApp()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    Terug
+  </div>
+  <div class="admin-section">
+    <h2>Aanvragen</h2>
+    <div id="adminRequests"></div>
+    <h2>Personeel</h2>
+    <div id="adminPersonnel"></div>
+  </div>
+</div>
+
 <!-- DETAIL VIEW -->
 <div class="detail" id="detailView">
   <div class="back" onclick="showList()">
@@ -283,17 +344,49 @@ const FIREBASE_CONFIG = {
 };
 firebase.initializeApp(FIREBASE_CONFIG);
 
-// === Auth flow (magic link) ===
-function showLoading()  { document.getElementById('loadingView').style.display = 'flex'; document.getElementById('loginView').style.display = 'none'; document.getElementById('header').style.display = 'none'; document.getElementById('listView').style.display = 'none'; document.getElementById('detailView').classList.remove('active'); }
-function showLogin()    { document.getElementById('loadingView').style.display = 'none'; document.getElementById('loginView').style.display = 'flex'; document.getElementById('header').style.display = 'none'; document.getElementById('listView').style.display = 'none'; document.getElementById('detailView').classList.remove('active'); }
-function showApp(user)  {
-  document.getElementById('loadingView').style.display = 'none';
-  document.getElementById('loginView').style.display = 'none';
+// Persistence: blijven ingelogd na browser sluiten (default LOCAL, expliciet voor zekerheid)
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('setPersistence:', e));
+
+// Bootstrap admin: deze email wordt automatisch admin als de whitelist nog leeg is
+const BOOTSTRAP_ADMIN_EMAIL = 'bram.denyn@gmail.com';
+
+// === State ===
+let currentUser = null;
+let currentRol = null;     // 'admin' | 'staff' | null
+let currentActief = false;
+let unsubRequests = null;  // listener cleanup voor admin
+
+// === View switching ===
+function hideAll() {
+  ['loadingView','loginView','noAccessView','adminView','listView'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('detailView').classList.remove('active');
+}
+function showLoading() { hideAll(); document.getElementById('loadingView').style.display = 'flex'; document.getElementById('header').style.display = 'none'; }
+function showLogin()   { hideAll(); document.getElementById('loginView').style.display = 'flex';   document.getElementById('header').style.display = 'none'; }
+function showNoAccess(user) {
+  hideAll();
+  document.getElementById('noAccessView').style.display = 'flex';
+  document.getElementById('noAccessEmail').textContent = user.email;
+  document.getElementById('header').style.display = 'none';
+}
+function showApp() {
+  hideAll();
   document.getElementById('header').style.display = 'flex';
   document.getElementById('listView').style.display = '';
   document.getElementById('userChip').style.display = 'flex';
-  document.getElementById('userEmail').textContent = user.email || 'ingelogd';
+  document.getElementById('userEmail').textContent = currentUser.email || 'ingelogd';
+  document.getElementById('adminBtn').style.display = (currentRol === 'admin') ? 'flex' : 'none';
   renderList(articles);
+}
+function showAdmin() {
+  if (currentRol !== 'admin') return;
+  hideAll();
+  document.getElementById('header').style.display = 'flex';
+  document.getElementById('adminView').style.display = 'block';
+  loadAdminData();
 }
 
 function showLoginMsg(text, type) {
@@ -302,24 +395,39 @@ function showLoginMsg(text, type) {
   el.className = 'login-msg ' + (type || '');
   el.style.display = 'block';
 }
+function showAccessMsg(text, type) {
+  const el = document.getElementById('accessMsg');
+  el.textContent = text;
+  el.className = 'login-msg ' + (type || '');
+  el.style.display = 'block';
+}
 
+// === Helpers ===
+function emailToSlug(email) {
+  // Firebase RTDB keys mogen geen . $ # [ ] / bevatten
+  return email.toLowerCase().replace(/\./g, ',').replace(/[$#\[\]\/]/g, '_');
+}
+function fmtDate(ts) {
+  if (!ts) return '?';
+  const d = new Date(ts);
+  return d.toLocaleDateString('nl-BE') + ' ' + d.toLocaleTimeString('nl-BE', {hour:'2-digit',minute:'2-digit'});
+}
+
+// === Auth flow (magic link) ===
 function actionCodeSettings() {
-  return {
-    url: window.location.origin + window.location.pathname,
-    handleCodeInApp: true
-  };
+  return { url: window.location.origin + window.location.pathname, handleCodeInApp: true };
 }
 
 async function sendMagicLink(ev) {
   ev.preventDefault();
-  const email = document.getElementById('emailInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   btn.textContent = 'Versturen...';
   try {
     await firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings());
     window.localStorage.setItem('emailForSignIn', email);
-    showLoginMsg('Check je inbox bij ' + email + '. Klik op de link om in te loggen. Eventueel kan de mail in je spam belanden.', 'success');
+    showLoginMsg('Check je inbox bij ' + email + '. Klik op de link om in te loggen. Mail kan in spam belanden.', 'success');
     btn.textContent = 'Verstuurd';
   } catch (err) {
     console.error(err);
@@ -331,26 +439,22 @@ async function sendMagicLink(ev) {
 
 async function logout() {
   if (!confirm('Uitloggen?')) return;
+  if (unsubRequests) { unsubRequests(); unsubRequests = null; }
   try {
     await firebase.auth().signOut();
     window.localStorage.removeItem('emailForSignIn');
     location.reload();
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function completeSignInIfLink() {
   if (!firebase.auth().isSignInWithEmailLink(window.location.href)) return false;
   let email = window.localStorage.getItem('emailForSignIn');
-  if (!email) {
-    email = prompt('Bevestig je e-mailadres om in te loggen:');
-  }
+  if (!email) email = prompt('Bevestig je e-mailadres om in te loggen:');
   if (!email) return false;
   try {
-    await firebase.auth().signInWithEmailLink(email, window.location.href);
+    await firebase.auth().signInWithEmailLink(email.toLowerCase(), window.location.href);
     window.localStorage.removeItem('emailForSignIn');
-    // Strip query params zodat refresh niet opnieuw signin probeert
     window.history.replaceState({}, document.title, window.location.pathname);
     return true;
   } catch (err) {
@@ -361,13 +465,212 @@ async function completeSignInIfLink() {
   }
 }
 
-// Init
+// === Whitelist + bootstrap ===
+async function checkAccess(user) {
+  const slug = emailToSlug(user.email);
+  const db = firebase.database();
+  // Lees whitelist entry voor deze email
+  const snap = await db.ref('whitelist/' + slug).once('value');
+  if (snap.exists()) {
+    const data = snap.val();
+    if (data.actief) {
+      currentRol = data.rol || 'staff';
+      currentActief = true;
+      // Update lastSeen + uid (bij eerste login koppelen we de uid aan de slug)
+      await db.ref('whitelist/' + slug).update({ uid: user.uid, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+      return true;
+    }
+    // Niet actief -> als geen toegang behandelen
+    return false;
+  }
+  // Geen whitelist entry. Check of dit de bootstrap admin is en whitelist leeg is.
+  if (user.email === BOOTSTRAP_ADMIN_EMAIL) {
+    const all = await db.ref('whitelist').once('value');
+    if (!all.exists()) {
+      // Bootstrap: maak Bram automatisch admin aan
+      await db.ref('whitelist/' + slug).set({
+        email: user.email,
+        naam: 'Bram De Nyn',
+        rol: 'admin',
+        actief: true,
+        uid: user.uid,
+        toegevoegd: firebase.database.ServerValue.TIMESTAMP,
+        toegevoegd_door: 'bootstrap',
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+      currentRol = 'admin';
+      currentActief = true;
+      return true;
+    }
+  }
+  return false;
+}
+
+// === Access request flow ===
+async function submitAccessRequest(ev) {
+  ev.preventDefault();
+  const naam = document.getElementById('reqName').value.trim();
+  const reden = document.getElementById('reqReason').value.trim();
+  const btn = document.getElementById('reqBtn');
+  if (!currentUser) return;
+  btn.disabled = true;
+  btn.textContent = 'Versturen...';
+  try {
+    const slug = emailToSlug(currentUser.email);
+    await firebase.database().ref('access-requests/' + slug).set({
+      uid: currentUser.uid,
+      email: currentUser.email,
+      naam: naam,
+      reden: reden,
+      gevraagd: firebase.database.ServerValue.TIMESTAMP,
+      status: 'pending'
+    });
+    showAccessMsg('Aanvraag verstuurd. Bram krijgt bericht en zal je toevoegen. Je mag dit venster sluiten.', 'success');
+    document.getElementById('accessRequestForm').style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    showAccessMsg('Aanvraag mislukt: ' + (err.message || err.code), 'error');
+    btn.disabled = false;
+    btn.textContent = 'Aanvraag versturen';
+  }
+}
+
+// === Admin views ===
+function loadAdminData() {
+  const db = firebase.database();
+  // Aanvragen (live)
+  if (unsubRequests) unsubRequests();
+  const reqRef = db.ref('access-requests').orderByChild('gevraagd');
+  const handler = snap => renderAdminRequests(snap.val() || {});
+  reqRef.on('value', handler);
+  unsubRequests = () => reqRef.off('value', handler);
+  // Personeel (eenmalig per render)
+  db.ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+}
+
+function renderAdminRequests(data) {
+  const container = document.getElementById('adminRequests');
+  const entries = Object.entries(data).filter(([k,v]) => v.status !== 'rejected');
+  // Update badge
+  const badge = document.getElementById('adminBadge');
+  badge.textContent = entries.length;
+  badge.style.display = entries.length ? 'inline-block' : 'none';
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty-admin">Geen openstaande aanvragen.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([slug, r]) => `
+    <div class="admin-card">
+      <div class="row1">
+        <div>
+          <div class="name">${escapeHtml(r.naam || '?')}</div>
+          <div class="email">${escapeHtml(r.email)}</div>
+        </div>
+      </div>
+      <div class="meta">Gevraagd op ${fmtDate(r.gevraagd)}</div>
+      <div class="reason">${escapeHtml(r.reden || '(geen reden opgegeven)')}</div>
+      <div class="actions">
+        <button class="btn-primary" style="padding:8px 14px;font-size:13px" onclick="approveRequest('${slug}','staff')">Goedkeuren als personeel</button>
+        <button class="btn-secondary" onclick="approveRequest('${slug}','admin')">Als admin</button>
+        <button class="btn-danger" onclick="rejectRequest('${slug}')">Weigeren</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAdminPersonnel(data) {
+  const container = document.getElementById('adminPersonnel');
+  const entries = Object.entries(data);
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty-admin">Nog geen personeel toegevoegd.</div>';
+    return;
+  }
+  container.innerHTML = entries
+    .sort((a,b) => (a[1].naam||'').localeCompare(b[1].naam||''))
+    .map(([slug, p]) => `
+    <div class="admin-card">
+      <div class="row1">
+        <div>
+          <div class="name">${escapeHtml(p.naam || '?')} <span class="role-pill ${p.rol}">${p.rol}</span></div>
+          <div class="email">${escapeHtml(p.email)}</div>
+        </div>
+      </div>
+      <div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)} ${p.lastSeen ? '· laatst gezien ' + fmtDate(p.lastSeen) : '· nog nooit ingelogd'}</div>
+      <div class="actions">
+        ${p.actief
+          ? `<button class="btn-danger" onclick="deactivatePersonnel('${slug}','${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`
+          : `<button class="btn-secondary" onclick="reactivatePersonnel('${slug}')">Heractiveren</button>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approveRequest(slug, rol) {
+  const db = firebase.database();
+  const reqSnap = await db.ref('access-requests/' + slug).once('value');
+  if (!reqSnap.exists()) return;
+  const r = reqSnap.val();
+  await db.ref('whitelist/' + slug).set({
+    email: r.email,
+    naam: r.naam,
+    rol: rol,
+    actief: true,
+    uid: r.uid || null,
+    toegevoegd: firebase.database.ServerValue.TIMESTAMP,
+    toegevoegd_door: currentUser.email
+  });
+  await db.ref('access-requests/' + slug).remove();
+  // Refresh personnel
+  db.ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+}
+
+async function rejectRequest(slug) {
+  if (!confirm('Aanvraag weigeren?')) return;
+  await firebase.database().ref('access-requests/' + slug).remove();
+}
+
+async function deactivatePersonnel(slug, naam) {
+  if (!confirm('Toegang intrekken voor ' + naam + '?')) return;
+  await firebase.database().ref('whitelist/' + slug).update({ actief: false });
+  firebase.database().ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+}
+async function reactivatePersonnel(slug) {
+  await firebase.database().ref('whitelist/' + slug).update({ actief: true });
+  firebase.database().ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// === Init ===
 (async () => {
   showLoading();
   await completeSignInIfLink();
-  firebase.auth().onAuthStateChanged(user => {
-    if (user) showApp(user);
-    else showLogin();
+  firebase.auth().onAuthStateChanged(async user => {
+    if (!user) { showLogin(); return; }
+    currentUser = user;
+    showLoading();
+    try {
+      const ok = await checkAccess(user);
+      if (ok) {
+        // Live listener voor admin: badge bijwerken bij nieuwe aanvragen
+        if (currentRol === 'admin') {
+          firebase.database().ref('access-requests').on('value', snap => {
+            const count = snap.numChildren();
+            const badge = document.getElementById('adminBadge');
+            badge.textContent = count;
+            badge.style.display = count ? 'inline-block' : 'none';
+          });
+        }
+        showApp();
+      } else {
+        showNoAccess(user);
+      }
+    } catch (err) {
+      console.error('checkAccess fout:', err);
+      showNoAccess(user);
+    }
   });
 })();
 
@@ -608,7 +911,6 @@ function showDetail(slug) {
   }
   document.getElementById('listView').classList.add('hidden');
   document.getElementById('detailView').classList.add('active');
-  document.getElementById('watermark').style.display = 'none';
   window.scrollTo(0, 0);
 }
 
@@ -616,7 +918,6 @@ function showList() {
   document.getElementById('listView').classList.remove('hidden');
   document.getElementById('listView').style.display = '';
   document.getElementById('detailView').classList.remove('active');
-  document.getElementById('watermark').style.display = '';
 }
 
 function toggleCheck(el) {
