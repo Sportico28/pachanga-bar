@@ -17,6 +17,18 @@
       }
     },
 
+    "content": {
+      ".read": "auth != null",
+      ".write": "auth.token.email == 'bram.denyn@gmail.com'"
+    },
+
+    "keyword-suggesties": {
+      ".read": "auth.token.email == 'bram.denyn@gmail.com'",
+      "$id": {
+        ".write": "auth != null && ((newData.exists() && newData.child('door').val() == auth.token.email) || auth.token.email == 'bram.denyn@gmail.com')"
+      }
+    },
+
     "voorstellen": {
       ".read": "auth != null",
       ".write": "auth != null"
