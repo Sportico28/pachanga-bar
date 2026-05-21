@@ -7,332 +7,236 @@
 <title>Bar28 - Pachanga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Saira:ital,wght@1,800;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <style>
   :root {
-    --bg: #000000;
-    --bg-elev: #0F0F0F;
-    --bg-watermark: #171717;
-    --fg: #FFFFFF;
-    --fg-muted: #A8A8A8;
-    --fg-dim: #6B6B6B;
-    --accent: #DC3550;
-    --accent-hover: #E94A65;
-    --success: #34D399;
-    --warning: #FBBF24;
-    --danger: #EF4444;
+    --bg: #000000; --bg-elev: #0F0F0F; --bg-elev2: #181818;
+    --fg: #FFFFFF; --fg-muted: #A8A8A8; --fg-dim: #6B6B6B;
+    --accent: #DC3550; --accent-hover: #E94A65;
+    --success: #34D399; --warning: #FBBF24; --danger: #EF4444;
     --border: #1F1F1F;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; }
-  body { max-width: 480px; margin: 0 auto; position: relative; padding-bottom: 40px; }
+  body { max-width: 520px; margin: 0 auto; position: relative; padding-bottom: 60px; }
+  input, textarea, select, button { font-family: inherit; }
 
-  /* Officieel Bar28 logo via <use> ref (sizing classes onderaan) */
+  /* Logo */
+  .bar28-logo { display: block; }
+  .bar28-logo-sm { width: 96px; height: auto; aspect-ratio: 682 / 151; }
+  .bar28-logo-lg { width: 260px; height: auto; aspect-ratio: 682 / 151; }
 
   /* Header */
-  .header {
-    position: sticky; top: 0; z-index: 10;
-    background: var(--bg); border-bottom: 1px solid var(--border);
-    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
-  }
+  .header { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
   .header-actions { display: flex; gap: 8px; align-items: center; }
-  .lang-switch {
-    background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg);
-    padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
-  }
-  .lang-switch:hover { border-color: var(--accent); }
+  .icon-btn { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; color: var(--fg); padding: 7px 9px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .badge { background: var(--accent); color: var(--fg); border-radius: 999px; padding: 0 6px; font-size: 10px; font-weight: 800; }
+  .user-chip { display: flex; align-items: center; gap: 7px; padding: 6px 10px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; cursor: pointer; }
+  .user-chip:hover { border-color: var(--accent); }
+  .user-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 
-  /* Search */
-  .search-wrap { padding: 16px 20px; position: relative; }
-  .search-input {
-    width: 100%; padding: 14px 16px; padding-left: 44px;
-    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
-    color: var(--fg); font-size: 16px; font-family: inherit;
-  }
-  .search-input:focus { outline: none; border-color: var(--accent); }
-  .search-input::placeholder { color: var(--fg-dim); }
-  .search-icon {
-    position: absolute; left: 34px; top: 50%; transform: translateY(-50%);
-    color: var(--fg-dim); pointer-events: none;
-  }
+  /* Full screen views */
+  .full-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; text-align: center; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .login-logo { margin-bottom: 32px; }
+  .login-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .login-subtitle { font-size: 14px; color: var(--fg-muted); margin-bottom: 28px; max-width: 320px; line-height: 1.5; }
 
-  /* Categorieën chips */
-  .chips { padding: 0 20px 16px; display: flex; gap: 8px; overflow-x: auto; }
+  /* Forms */
+  .form-col { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 340px; }
+  input[type=text], input[type=email], textarea, select {
+    width: 100%; padding: 13px 15px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 11px;
+    color: var(--fg); font-size: 15px; resize: vertical;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--fg-dim); }
+  label.fld { font-size: 12px; font-weight: 600; color: var(--fg-muted); display: block; margin-bottom: 5px; letter-spacing: 0.03em; }
+  .btn { padding: 13px 16px; border: none; border-radius: 11px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.03em; }
+  .btn-primary { background: var(--accent); color: var(--fg); }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--fg-muted); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--fg); }
+  .btn-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); border-radius: 999px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-danger:hover { background: var(--danger); color: var(--fg); }
+  .msg { padding: 12px 15px; border-radius: 10px; font-size: 13px; line-height: 1.5; margin-top: 14px; }
+  .msg.success { background: rgba(52,211,153,0.1); border: 1px solid var(--success); color: var(--success); }
+  .msg.error { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: var(--danger); }
+
+  /* Search + chips */
+  .search-wrap { padding: 16px 20px 10px; position: relative; }
+  .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; color: var(--fg); font-size: 16px; }
+  .search-icon { position: absolute; left: 34px; top: 30px; color: var(--fg-dim); pointer-events: none; }
+  .chips { padding: 0 20px 14px; display: flex; gap: 8px; overflow-x: auto; }
   .chips::-webkit-scrollbar { display: none; }
-  .chip {
-    flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
-    background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg-muted); cursor: pointer;
-    letter-spacing: 0.04em; transition: all 0.15s;
-  }
-  .chip:hover { color: var(--fg); }
+  .chip { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg-muted); cursor: pointer; white-space: nowrap; }
   .chip.active { background: var(--accent); color: var(--fg); border-color: var(--accent); }
 
   /* Article list */
   .list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
-  .card {
-    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 16px;
-    padding: 16px; cursor: pointer; transition: transform 0.1s, border-color 0.15s;
-  }
+  .card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 16px; padding: 16px; cursor: pointer; }
   .card:hover { border-color: var(--accent); }
-  .card:active { transform: scale(0.98); }
   .card-cat { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; }
   .card-title { font-size: 18px; font-weight: 700; margin-top: 6px; }
   .card-summary { font-size: 14px; color: var(--fg-muted); margin-top: 6px; line-height: 1.4; }
   .card-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  .tag {
-    font-size: 11px; padding: 3px 8px; border-radius: 999px;
-    background: rgba(255,255,255,0.05); color: var(--fg-dim);
-  }
-
-  /* Empty */
+  .tag { font-size: 11px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.05); color: var(--fg-dim); }
   .empty { padding: 40px 20px; text-align: center; color: var(--fg-dim); }
 
-  /* Detail */
+  /* Detail / article */
   .detail { display: none; }
   .detail.active { display: block; }
-  .list-view.hidden { display: none; }
-  .back {
-    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
-    background: var(--bg-elev); border-radius: 999px; font-size: 13px; cursor: pointer;
-    color: var(--fg-muted); margin: 16px 0 0 20px;
-  }
+  .back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--bg-elev); border-radius: 999px; font-size: 13px; cursor: pointer; color: var(--fg-muted); margin: 16px 0 0 20px; }
   .back:hover { color: var(--accent); }
   .article { padding: 20px; }
   .article h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; line-height: 1.2; }
   .article .meta { font-size: 12px; color: var(--fg-dim); margin-bottom: 20px; }
-  .article h2 { font-size: 18px; font-weight: 700; margin-top: 28px; margin-bottom: 10px; color: var(--fg); }
-  .article p { font-size: 15px; line-height: 1.6; color: var(--fg); margin-bottom: 12px; }
+  .article h2 { font-size: 18px; font-weight: 700; margin-top: 28px; margin-bottom: 10px; }
+  .article p { font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
   .article ul, .article ol { margin-left: 18px; margin-bottom: 16px; }
   .article li { font-size: 15px; line-height: 1.6; margin-bottom: 6px; }
-  .article strong { color: var(--fg); font-weight: 700; }
+  .article strong { font-weight: 700; }
+
+  /* Keyword highlight */
+  .kw { color: var(--accent); border-bottom: 1px dotted var(--accent); cursor: pointer; font-weight: 600; }
+  .kw:hover { background: rgba(220,53,80,0.12); }
 
   /* Checklist */
-  .checklist-item {
-    display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);
-    cursor: pointer; user-select: none;
-  }
-  .checklist-item input[type="checkbox"] {
-    appearance: none; width: 22px; height: 22px; border: 2px solid var(--fg-muted);
-    border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-top: 2px;
-    display: grid; place-items: center;
-  }
-  .checklist-item input[type="checkbox"]:checked {
-    background: var(--success); border-color: var(--success);
-  }
-  .checklist-item input[type="checkbox"]:checked::after {
-    content: '\2713'; color: var(--bg); font-weight: 900; font-size: 14px;
-  }
+  .checklist-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  .checklist-item input[type=checkbox] { appearance: none; width: 22px; height: 22px; border: 2px solid var(--fg-muted); border-radius: 6px; cursor: pointer; flex-shrink: 0; margin-top: 2px; display: grid; place-items: center; }
+  .checklist-item input[type=checkbox]:checked { background: var(--success); border-color: var(--success); }
+  .checklist-item input[type=checkbox]:checked::after { content: '\2713'; color: var(--bg); font-weight: 900; font-size: 14px; }
   .checklist-item.checked label { color: var(--fg-dim); text-decoration: line-through; }
   .checklist-item label { font-size: 15px; line-height: 1.5; cursor: pointer; flex: 1; }
   .checklist-section { font-size: 11px; letter-spacing: 0.1em; font-weight: 700; color: var(--accent); margin-top: 24px; margin-bottom: 8px; }
 
-  /* Related */
-  .related-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-  .related-item {
-    padding: 10px 14px; background: var(--bg-elev); border-radius: 10px;
-    font-size: 14px; cursor: pointer; color: var(--fg-muted); transition: color 0.15s;
-  }
-  .related-item:hover { color: var(--accent); }
+  /* Popup / modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 24px 20px 32px; }
+  @media (min-width: 540px) { .modal-overlay { align-items: center; } .modal { border-radius: 20px; } }
+  .modal h3 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .modal .kw-photo { width: 100%; border-radius: 12px; margin: 14px 0; border: 1px solid var(--border); }
+  .modal .kw-uitleg { font-size: 15px; line-height: 1.6; color: var(--fg); }
+  .modal-close { float: right; background: var(--bg-elev2); border: none; color: var(--fg-muted); border-radius: 8px; width: 32px; height: 32px; font-size: 18px; cursor: pointer; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
 
-  /* Login & Loading */
-  .full-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; }
-  .login-logo { display: flex; flex-direction: column; align-items: center; margin-bottom: 32px; }
-  .login-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; text-align: center; }
-  .login-subtitle { font-size: 14px; color: var(--fg-muted); text-align: center; margin-bottom: 28px; max-width: 320px; line-height: 1.5; }
-  .login-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; }
-  .login-form input {
-    padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
-    color: var(--fg); font-size: 16px; font-family: inherit;
-  }
-  .login-form input:focus { outline: none; border-color: var(--accent); }
-  .login-form button {
-    padding: 14px 16px; background: var(--accent); border: none; border-radius: 12px;
-    color: var(--fg); font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; letter-spacing: 0.04em;
-  }
-  .login-form button:hover { background: var(--accent-hover); }
-  .login-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .login-msg { margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; line-height: 1.5; max-width: 320px; text-align: center; }
-  .login-msg.success { background: rgba(52, 211, 153, 0.1); border: 1px solid var(--success); color: var(--success); }
-  .login-msg.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); }
-
-  .spinner {
-    width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
-    border-radius: 50%; animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Logout button */
-  .user-chip {
-    display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 999px;
-    font-size: 12px; cursor: pointer;
-  }
-  .user-chip:hover { border-color: var(--accent); }
-  .user-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
-
-  /* Officieel Bar28 logo via <use> ref */
-  .bar28-logo { display: block; }
-  .bar28-logo-sm { width: 100px; height: auto; aspect-ratio: 682 / 151; }
-  .bar28-logo-lg { width: 280px; height: auto; aspect-ratio: 682 / 151; }
-
-  /* No-access view */
-  .no-access { text-align: center; max-width: 360px; }
-  .no-access h2 { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
-  .no-access p { color: var(--fg-muted); line-height: 1.5; margin-bottom: 22px; }
-  .access-form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; margin: 0 auto; }
-  .access-form input, .access-form textarea {
-    padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
-    color: var(--fg); font-size: 16px; font-family: inherit; resize: vertical; min-height: 44px;
-  }
-  .access-form textarea { min-height: 80px; }
-  .access-form input:focus, .access-form textarea:focus { outline: none; border-color: var(--accent); }
-  .btn-primary { padding: 14px 16px; background: var(--accent); border: none; border-radius: 12px; color: var(--fg); font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 0.04em; font-family: inherit; }
-  .btn-primary:hover { background: var(--accent-hover); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-secondary { padding: 10px 14px; background: transparent; border: 1px solid var(--border); border-radius: 999px; color: var(--fg-muted); font-size: 13px; cursor: pointer; font-family: inherit; }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--fg); }
-  .btn-danger { padding: 10px 14px; background: transparent; border: 1px solid var(--danger); border-radius: 999px; color: var(--danger); font-size: 13px; cursor: pointer; font-family: inherit; }
-  .btn-danger:hover { background: var(--danger); color: var(--fg); }
-
-  /* Admin view */
-  .admin-section { padding: 20px; }
-  .admin-section h2 { font-size: 16px; font-weight: 700; color: var(--accent); margin-top: 24px; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
-  .admin-section h2:first-child { margin-top: 0; }
-  .admin-card {
-    background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px; margin-bottom: 10px;
-  }
-  .admin-card .row1 { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+  /* Admin */
+  .admin-section { padding: 18px 20px; }
+  .admin-tabs { display: flex; gap: 6px; padding: 14px 20px 0; overflow-x: auto; }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tab { flex-shrink: 0; padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg-muted); cursor: pointer; white-space: nowrap; }
+  .admin-tab.active { background: var(--accent); color: var(--fg); border-color: var(--accent); }
+  .admin-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .admin-card .row1 { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .admin-card .name { font-size: 15px; font-weight: 700; }
-  .admin-card .email { font-size: 13px; color: var(--fg-muted); }
-  .admin-card .reason { font-size: 13px; color: var(--fg); margin: 8px 0 12px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; line-height: 1.4; }
-  .admin-card .meta { font-size: 11px; color: var(--fg-dim); margin-bottom: 10px; }
-  .admin-card .actions { display: flex; gap: 8px; }
+  .admin-card .email, .admin-card .sub { font-size: 13px; color: var(--fg-muted); }
+  .admin-card .reason { font-size: 13px; margin: 8px 0 12px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 8px; line-height: 1.4; }
+  .admin-card .meta { font-size: 11px; color: var(--fg-dim); margin: 6px 0 10px; }
+  .admin-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .role-pill { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   .role-pill.admin { background: var(--accent); color: var(--fg); }
   .role-pill.staff { background: rgba(255,255,255,0.05); color: var(--fg-muted); }
-  .empty-admin { padding: 30px 20px; text-align: center; color: var(--fg-dim); font-size: 14px; }
-
-  .admin-btn {
-    background: transparent; border: 1px solid var(--border); border-radius: 8px;
-    color: var(--fg); padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; gap: 4px;
-  }
-  .admin-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .header-tabs { display: flex; gap: 4px; }
+  .empty-admin { padding: 26px 20px; text-align: center; color: var(--fg-dim); font-size: 14px; }
+  .add-btn { width: 100%; padding: 14px; border: 1px dashed var(--border); background: transparent; color: var(--accent); border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 14px; }
+  .add-btn:hover { border-color: var(--accent); background: rgba(220,53,80,0.06); }
+  .img-preview { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); margin-top: 8px; }
+  .help { font-size: 12px; color: var(--fg-dim); margin-top: 4px; line-height: 1.4; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg-elev2); border: 1px solid var(--border); color: var(--fg); padding: 12px 20px; border-radius: 999px; font-size: 14px; z-index: 200; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- Officieel Bar28 logo, eenmaal als symbol gedefinieerd, hergebruikt via <use> -->
+<!-- Officieel Bar28 logo als symbol -->
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs><symbol id="bar28-logo" viewBox="0 0 682 151"><g transform="matrix(1,0,0,1,-619.003,-453.608)"><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M760.046,398.839C763.885,393.797 766.193,387.53 766.193,380.718C766.193,364.171 752.732,350.71 736.186,350.71L665.122,350.71C648.575,350.71 635.115,364.171 635.115,380.718C635.115,387.53 637.422,393.797 641.261,398.839C637.422,403.882 635.115,410.15 635.115,416.962C635.115,433.508 648.575,446.968 665.122,446.968L736.186,446.968C752.732,446.968 766.193,433.508 766.193,416.962C766.193,410.15 763.885,403.882 760.046,398.839ZM659.137,401.578L685.273,401.578C689.569,401.578 693.05,405.059 693.05,409.355L693.05,409.998L734.121,405.432C736.319,405.189 738.517,405.893 740.166,407.367C741.814,408.843 742.755,410.95 742.755,413.162C742.755,415.374 741.814,417.481 740.166,418.957C738.517,420.429 736.319,421.133 734.121,420.89L693.05,416.327L693.05,416.968C693.05,421.264 689.569,424.746 685.273,424.746L659.137,424.746C657.536,424.746 656.241,423.451 656.241,421.85C656.241,420.249 657.536,418.954 659.137,418.954L675.312,418.954L675.312,416.058L659.137,416.058C657.536,416.058 656.241,414.763 656.241,413.162C656.241,411.561 657.536,410.265 659.137,410.265L675.312,410.265L675.312,407.371L659.137,407.371C657.536,407.371 656.241,406.075 656.241,404.474C656.241,402.874 657.536,401.578 659.137,401.578ZM742.839,376.256C738.498,384.483 729.963,389.633 720.658,389.633L702.571,389.633C698.922,389.633 695.965,386.674 695.965,383.026L695.965,382.526L666.205,386.494C664.033,386.782 661.838,386.121 660.19,384.678C658.541,383.233 657.594,381.146 657.594,378.954C657.594,376.762 658.541,374.675 660.19,373.23C661.838,371.788 664.032,371.127 666.205,371.415L695.965,375.381L695.965,375.272C695.965,374.107 696.908,373.163 698.073,373.163L740.972,373.163C741.714,373.163 742.398,373.55 742.779,374.183C743.161,374.817 743.184,375.603 742.839,376.256Z" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M631.431,446.821L500.353,446.821L500.353,416.962C500.353,400.416 513.813,386.955 530.359,386.955L601.424,386.955C604.863,386.955 607.662,384.157 607.662,380.717C607.662,377.278 604.863,374.48 601.424,374.48L500.352,374.48L500.352,350.71L601.424,350.71C617.97,350.71 631.431,364.171 631.431,380.717C631.431,397.264 617.97,410.725 601.424,410.725L530.359,410.725C526.92,410.725 524.122,413.523 524.122,416.962L524.122,423.051L631.431,423.051L631.431,446.821Z" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M209.219,398.769C213.022,393.74 215.307,387.502 215.307,380.725C215.307,364.178 201.846,350.717 185.3,350.717L175.931,350.717L175.926,350.737C161.468,350.743 132.526,350.735 107.97,350.723L107.97,350.71L84.199,350.71L84.199,446.829L107.97,446.829L107.97,446.815C132.517,446.803 161.443,446.795 175.905,446.802L185.3,446.821C201.846,446.821 215.307,433.36 215.307,416.814C215.307,410.037 213.022,403.798 209.219,398.769ZM107.97,423.045L107.97,410.732L185.3,410.732C185.645,410.732 185.98,410.692 186.322,410.68C189.274,411.172 191.537,413.725 191.537,416.814C191.537,420.23 188.777,423.013 185.37,423.051C185.294,423.049 185.217,423.048 185.14,423.047L181.48,423.037C179.037,423.034 175.546,423.031 171.359,423.03C168.591,423.029 165.521,423.029 162.245,423.029C155.615,423.029 148.149,423.03 140.685,423.033C128.595,423.036 116.507,423.041 107.97,423.045ZM191.537,380.725C191.537,383.814 189.274,386.367 186.322,386.858C185.98,386.847 185.645,386.806 185.3,386.806L107.97,386.806L107.97,374.494C116.507,374.497 128.595,374.503 140.684,374.507C148.14,374.509 155.595,374.51 162.218,374.51C170.464,374.51 177.419,374.509 181.48,374.502L185.141,374.492C185.218,374.491 185.295,374.489 185.371,374.488C188.778,374.526 191.537,377.309 191.537,380.725Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M492.195,380.533C492.195,363.987 478.733,350.525 462.186,350.525L452.816,350.525L452.812,350.545C435.932,350.552 399.312,350.541 372.978,350.525L361.086,350.519L361.086,446.637L384.856,446.637L384.856,410.541L462.186,410.541C462.251,410.541 462.315,410.531 462.381,410.531C465.728,410.636 468.422,413.376 468.422,416.748L468.422,446.829L492.193,446.829L492.193,416.748C492.193,409.943 489.889,403.681 486.058,398.642C489.891,393.602 492.195,387.339 492.195,380.533ZM468.424,380.533C468.424,383.906 465.728,386.646 462.379,386.751C462.314,386.75 462.251,386.741 462.186,386.741L462.186,386.77L384.856,386.77L384.856,374.302C393.393,374.306 405.482,374.311 417.57,374.315C425.026,374.317 432.481,374.318 439.104,374.318C447.35,374.318 454.303,374.316 458.366,374.31L462.026,374.3C462.103,374.3 462.181,374.298 462.258,374.296C465.664,374.334 468.424,377.118 468.424,380.533Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><path d="M354.523,446.829L354.523,380.718C354.523,364.172 341.061,350.711 324.515,350.711L253.451,350.711C236.905,350.711 223.443,364.172 223.443,380.718L223.443,446.829L247.214,446.829L247.214,410.654L330.752,410.654L330.752,446.829L354.523,446.829ZM330.752,380.718L330.752,386.884L247.214,386.884L247.214,380.718C247.214,377.279 250.011,374.481 253.451,374.481L324.515,374.481C327.954,374.481 330.752,377.279 330.752,380.718Z" style="fill:white;fill-rule:nonzero;"/></g><g transform="matrix(1,0,0,1,534.804,103.089)"><rect x="84.199" y="477.318" width="681.995" height="23.769" style="fill:rgb(220,53,80);fill-rule:nonzero;"/></g></g></symbol></defs></svg>
 
 <!-- HEADER -->
 <header class="header" id="header" style="display:none;">
   <svg class="bar28-logo bar28-logo-sm" aria-label="Bar28" style="cursor:pointer" onclick="showApp()"><use href="#bar28-logo"/></svg>
   <div class="header-actions">
-    <button class="admin-btn" id="adminBtn" onclick="showAdmin()" style="display:none;" title="Beheer">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span id="adminBadge" style="display:none;background:var(--accent);color:var(--fg);border-radius:999px;padding:0 6px;font-size:10px;font-weight:800;">0</span>
+    <button class="icon-btn" id="adminBtn" onclick="showAdmin()" style="display:none;" title="Beheer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="badge" id="adminBadge" style="display:none;">0</span>
     </button>
-    <div class="user-chip" id="userChip" onclick="logout()" style="display:none;">
-      <span class="dot"></span>
-      <span id="userEmail"></span>
-    </div>
+    <div class="user-chip" id="userChip" onclick="logout()" style="display:none;"><span class="dot"></span><span id="userEmail"></span></div>
   </div>
 </header>
 
 <!-- LOADING -->
-<div class="full-screen" id="loadingView">
-  <div class="spinner"></div>
-</div>
+<div class="full-screen" id="loadingView"><div class="spinner"></div></div>
 
 <!-- LOGIN -->
 <div class="full-screen" id="loginView" style="display:none;">
-  <div class="login-logo">
-    <svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg>
-  </div>
+  <div class="login-logo"><svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg></div>
   <div class="login-title">Welkom bij Bar28</div>
-  <div class="login-subtitle">Log in met je e-mail. Je krijgt een mail met een link om in te loggen, geen wachtwoord nodig.</div>
-  <form class="login-form" id="loginForm" onsubmit="sendMagicLink(event)">
+  <div class="login-subtitle">Log in met je e-mail. Je krijgt een mail met een link, geen wachtwoord nodig.</div>
+  <form class="form-col" id="loginForm" onsubmit="sendMagicLink(event)">
     <input type="email" id="emailInput" placeholder="jouw@email.be" required autocomplete="email">
-    <button type="submit" id="loginBtn">Stuur magic link</button>
+    <button type="submit" class="btn btn-primary" id="loginBtn">Stuur magic link</button>
   </form>
-  <div class="login-msg" id="loginMsg" style="display:none;"></div>
+  <div class="msg" id="loginMsg" style="display:none;max-width:320px;"></div>
+</div>
+
+<!-- NO ACCESS -->
+<div class="full-screen" id="noAccessView" style="display:none;">
+  <div class="login-logo"><svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg></div>
+  <div class="login-title">Nog geen toegang</div>
+  <div class="login-subtitle">Je e-mail (<strong id="noAccessEmail"></strong>) staat nog niet in de Bar28 personeelslijst. Vraag toegang aan en Bram krijgt je aanvraag.</div>
+  <form class="form-col" id="accessRequestForm" onsubmit="submitAccessRequest(event)">
+    <input type="text" id="reqName" placeholder="Je naam" required>
+    <textarea id="reqReason" placeholder="Korte reden (bv. nieuwe medewerker, start deze week)" required></textarea>
+    <button type="submit" class="btn btn-primary" id="reqBtn">Aanvraag versturen</button>
+  </form>
+  <div class="msg" id="accessMsg" style="display:none;max-width:320px;"></div>
+  <button class="btn-ghost" style="margin-top:24px" onclick="logout()">Uitloggen</button>
 </div>
 
 <!-- LIST VIEW -->
 <div class="list-view" id="listView" style="display:none;">
   <div class="search-wrap">
-    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-    <input type="text" class="search-input" placeholder="Zoek alles (probeer 'koffie' of 'aperol')" id="searchInput">
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" class="search-input" placeholder="Zoek alles (bv. koffie, aperol, fifo)" id="searchInput">
   </div>
-
-  <div class="chips">
-    <div class="chip active" data-cat="alle">Alle</div>
-    <div class="chip" data-cat="recepten">Recepten</div>
-    <div class="chip" data-cat="openen-sluiten">Openen & sluiten</div>
-    <div class="chip" data-cat="aanvulling">Aanvulling</div>
-    <div class="chip" data-cat="schoonmaak">Schoonmaak</div>
-    <div class="chip" data-cat="klantsituaties">Klantsituaties</div>
-  </div>
-
+  <div class="chips" id="chips"></div>
   <div class="list" id="resultList"></div>
-</div>
-
-<!-- NO ACCESS VIEW -->
-<div class="full-screen" id="noAccessView" style="display:none;">
-  <div class="login-logo">
-    <svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg>
-  </div>
-  <div class="no-access" id="noAccessContent">
-    <h2>Nog geen toegang</h2>
-    <p>Je e-mail (<strong id="noAccessEmail"></strong>) staat nog niet in de Bar28 personeelslijst. Vraag toegang aan en Bram ontvangt je aanvraag.</p>
-    <form class="access-form" id="accessRequestForm" onsubmit="submitAccessRequest(event)">
-      <input type="text" id="reqName" placeholder="Je naam" required>
-      <textarea id="reqReason" placeholder="Korte reden (bv. 'nieuwe medewerker, start deze week')" required></textarea>
-      <button class="btn-primary" type="submit" id="reqBtn">Aanvraag versturen</button>
-    </form>
-    <div class="login-msg" id="accessMsg" style="display:none;margin:16px auto 0;"></div>
-    <button class="btn-secondary" style="margin-top:24px" onclick="logout()">Uitloggen</button>
-  </div>
-</div>
-
-<!-- ADMIN VIEW -->
-<div class="detail" id="adminView" style="display:none;">
-  <div class="back" onclick="showApp()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    Terug
-  </div>
-  <div class="admin-section">
-    <h2>Aanvragen</h2>
-    <div id="adminRequests"></div>
-    <h2>Personeel</h2>
-    <div id="adminPersonnel"></div>
-  </div>
 </div>
 
 <!-- DETAIL VIEW -->
 <div class="detail" id="detailView">
-  <div class="back" onclick="showList()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="15 18 9 12 15 6"></polyline>
-    </svg>
-    Terug
-  </div>
+  <div class="back" onclick="showList()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg> Terug</div>
   <article class="article" id="articleBody"></article>
 </div>
 
+<!-- ADMIN VIEW -->
+<div class="detail" id="adminView">
+  <div class="back" onclick="showApp()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg> Terug naar app</div>
+  <div class="admin-tabs" id="adminTabs">
+    <div class="admin-tab active" data-tab="artikels" onclick="setAdminTab('artikels')">Artikels</div>
+    <div class="admin-tab" data-tab="categorieen" onclick="setAdminTab('categorieen')">Categorieën</div>
+    <div class="admin-tab" data-tab="keywords" onclick="setAdminTab('keywords')">Keywords</div>
+    <div class="admin-tab" data-tab="aanvragen" onclick="setAdminTab('aanvragen')">Aanvragen</div>
+    <div class="admin-tab" data-tab="personeel" onclick="setAdminTab('personeel')">Personeel</div>
+  </div>
+  <div class="admin-section" id="adminContent"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-// === Firebase ===
+// ============ Firebase ============
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAZmHyN-VFR0an5naYUSoPn_9YidsVZhiU",
   authDomain: "pachanga-bar.firebaseapp.com",
@@ -343,598 +247,451 @@ const FIREBASE_CONFIG = {
   appId: "1:321793362029:web:9fa0e656d08a4e1a8a5764"
 };
 firebase.initializeApp(FIREBASE_CONFIG);
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persist', e));
 
-// Persistence: blijven ingelogd na browser sluiten (default LOCAL, expliciet voor zekerheid)
-firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('setPersistence:', e));
-
-// Bootstrap admin: deze email wordt automatisch admin als de whitelist nog leeg is
 const BOOTSTRAP_ADMIN_EMAIL = 'bram.denyn@gmail.com';
+const db = firebase.database();
+const storage = firebase.storage();
 
-// === State ===
-let currentUser = null;
-let currentRol = null;     // 'admin' | 'staff' | null
-let currentActief = false;
-let unsubRequests = null;  // listener cleanup voor admin
+// ============ State ============
+let currentUser = null, currentRol = null;
+let content = { categorieen: {}, artikels: {}, keywords: {} };
+let fuse = null;
+let activeCategory = 'alle';
+let adminTab = 'artikels';
 
-// === View switching ===
+// ============ View helpers ============
 function hideAll() {
-  ['loadingView','loginView','noAccessView','adminView','listView'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
+  ['loadingView','loginView','noAccessView','listView'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('detailView').classList.remove('active');
+  document.getElementById('adminView').classList.remove('active');
 }
 function showLoading() { hideAll(); document.getElementById('loadingView').style.display = 'flex'; document.getElementById('header').style.display = 'none'; }
-function showLogin()   { hideAll(); document.getElementById('loginView').style.display = 'flex';   document.getElementById('header').style.display = 'none'; }
-function showNoAccess(user) {
-  hideAll();
-  document.getElementById('noAccessView').style.display = 'flex';
-  document.getElementById('noAccessEmail').textContent = user.email;
-  document.getElementById('header').style.display = 'none';
-}
+function showLogin()   { hideAll(); document.getElementById('loginView').style.display = 'flex'; document.getElementById('header').style.display = 'none'; }
+function showNoAccess(u){ hideAll(); document.getElementById('noAccessView').style.display='flex'; document.getElementById('noAccessEmail').textContent=u.email; document.getElementById('header').style.display='none'; }
 function showApp() {
   hideAll();
   document.getElementById('header').style.display = 'flex';
   document.getElementById('listView').style.display = '';
   document.getElementById('userChip').style.display = 'flex';
-  document.getElementById('userEmail').textContent = currentUser.email || 'ingelogd';
-  document.getElementById('adminBtn').style.display = (currentRol === 'admin') ? 'flex' : 'none';
-  renderList(articles);
+  document.getElementById('userEmail').textContent = currentUser.email;
+  document.getElementById('adminBtn').style.display = (currentRol==='admin') ? 'flex' : 'none';
+  renderChips(); applyFilters();
 }
-function showAdmin() {
-  if (currentRol !== 'admin') return;
-  hideAll();
-  document.getElementById('header').style.display = 'flex';
-  document.getElementById('adminView').style.display = 'block';
-  loadAdminData();
-}
+function showDetailView() { hideAll(); document.getElementById('header').style.display='flex'; document.getElementById('detailView').classList.add('active'); }
+function showAdmin() { if(currentRol!=='admin')return; hideAll(); document.getElementById('header').style.display='flex'; document.getElementById('adminView').classList.add('active'); renderAdmin(); }
 
-function showLoginMsg(text, type) {
-  const el = document.getElementById('loginMsg');
-  el.textContent = text;
-  el.className = 'login-msg ' + (type || '');
-  el.style.display = 'block';
-}
-function showAccessMsg(text, type) {
-  const el = document.getElementById('accessMsg');
-  el.textContent = text;
-  el.className = 'login-msg ' + (type || '');
-  el.style.display = 'block';
-}
+function msg(id, text, type) { const el=document.getElementById(id); el.textContent=text; el.className='msg '+(type||''); el.style.display='block'; }
+function toast(text) { const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function emailToSlug(e){ return e.toLowerCase().replace(/\./g,',').replace(/[$#\[\]\/]/g,'_'); }
+function fmtDate(ts){ if(!ts)return'?'; const d=new Date(ts); return d.toLocaleDateString('nl-BE')+' '+d.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'}); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
-// === Helpers ===
-function emailToSlug(email) {
-  // Firebase RTDB keys mogen geen . $ # [ ] / bevatten
-  return email.toLowerCase().replace(/\./g, ',').replace(/[$#\[\]\/]/g, '_');
-}
-function fmtDate(ts) {
-  if (!ts) return '?';
-  const d = new Date(ts);
-  return d.toLocaleDateString('nl-BE') + ' ' + d.toLocaleTimeString('nl-BE', {hour:'2-digit',minute:'2-digit'});
-}
-
-// === Auth flow (magic link) ===
-function actionCodeSettings() {
-  return { url: window.location.origin + window.location.pathname, handleCodeInApp: true };
-}
-
-async function sendMagicLink(ev) {
+// ============ Auth (magic link) ============
+function actionCodeSettings(){ return { url: window.location.origin+window.location.pathname, handleCodeInApp:true }; }
+async function sendMagicLink(ev){
   ev.preventDefault();
-  const email = document.getElementById('emailInput').value.trim().toLowerCase();
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'Versturen...';
+  const email=document.getElementById('emailInput').value.trim().toLowerCase();
+  const btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='Versturen...';
   try {
     await firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings());
-    window.localStorage.setItem('emailForSignIn', email);
-    showLoginMsg('Check je inbox bij ' + email + '. Klik op de link om in te loggen. Mail kan in spam belanden.', 'success');
-    btn.textContent = 'Verstuurd';
-  } catch (err) {
-    console.error(err);
-    showLoginMsg('Kon geen mail versturen: ' + (err.message || err.code), 'error');
-    btn.disabled = false;
-    btn.textContent = 'Stuur magic link';
-  }
+    localStorage.setItem('emailForSignIn', email);
+    msg('loginMsg','Check je inbox bij '+email+'. Klik de link om in te loggen. Mail kan in spam belanden.','success');
+    btn.textContent='Verstuurd';
+  } catch(e){ console.error(e); msg('loginMsg','Kon geen mail versturen: '+(e.message||e.code),'error'); btn.disabled=false; btn.textContent='Stuur magic link'; }
+}
+async function logout(){ if(!confirm('Uitloggen?'))return; try{ await firebase.auth().signOut(); localStorage.removeItem('emailForSignIn'); location.reload(); }catch(e){console.error(e);} }
+async function completeSignInIfLink(){
+  if(!firebase.auth().isSignInWithEmailLink(window.location.href))return false;
+  let email=localStorage.getItem('emailForSignIn'); if(!email)email=prompt('Bevestig je e-mailadres:');
+  if(!email)return false;
+  try{ await firebase.auth().signInWithEmailLink(email.toLowerCase(), window.location.href); localStorage.removeItem('emailForSignIn'); window.history.replaceState({},document.title,window.location.pathname); return true; }
+  catch(e){ console.error(e); showLogin(); msg('loginMsg','Inloggen mislukt: '+(e.message||e.code),'error'); return false; }
 }
 
-async function logout() {
-  if (!confirm('Uitloggen?')) return;
-  if (unsubRequests) { unsubRequests(); unsubRequests = null; }
-  try {
-    await firebase.auth().signOut();
-    window.localStorage.removeItem('emailForSignIn');
-    location.reload();
-  } catch (err) { console.error(err); }
-}
-
-async function completeSignInIfLink() {
-  if (!firebase.auth().isSignInWithEmailLink(window.location.href)) return false;
-  let email = window.localStorage.getItem('emailForSignIn');
-  if (!email) email = prompt('Bevestig je e-mailadres om in te loggen:');
-  if (!email) return false;
-  try {
-    await firebase.auth().signInWithEmailLink(email.toLowerCase(), window.location.href);
-    window.localStorage.removeItem('emailForSignIn');
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return true;
-  } catch (err) {
-    console.error(err);
-    showLogin();
-    showLoginMsg('Inloggen mislukt: ' + (err.message || err.code), 'error');
+// ============ Whitelist + bootstrap ============
+async function checkAccess(user){
+  const slug=emailToSlug(user.email);
+  const snap=await db.ref('whitelist/'+slug).once('value');
+  if(snap.exists()){
+    const d=snap.val();
+    if(d.actief){ currentRol=d.rol||'staff'; db.ref('whitelist/'+slug).update({uid:user.uid,lastSeen:firebase.database.ServerValue.TIMESTAMP}).catch(()=>{}); return true; }
     return false;
   }
-}
-
-// === Whitelist + bootstrap ===
-async function checkAccess(user) {
-  const slug = emailToSlug(user.email);
-  const db = firebase.database();
-  // Lees whitelist entry voor deze email
-  const snap = await db.ref('whitelist/' + slug).once('value');
-  if (snap.exists()) {
-    const data = snap.val();
-    if (data.actief) {
-      currentRol = data.rol || 'staff';
-      currentActief = true;
-      // Update lastSeen + uid (bij eerste login koppelen we de uid aan de slug)
-      await db.ref('whitelist/' + slug).update({ uid: user.uid, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-      return true;
-    }
-    // Niet actief -> als geen toegang behandelen
-    return false;
-  }
-  // Geen whitelist entry. Check of dit de bootstrap admin is en whitelist leeg is.
-  if (user.email === BOOTSTRAP_ADMIN_EMAIL) {
-    const all = await db.ref('whitelist').once('value');
-    if (!all.exists()) {
-      // Bootstrap: maak Bram automatisch admin aan
-      await db.ref('whitelist/' + slug).set({
-        email: user.email,
-        naam: 'Bram De Nyn',
-        rol: 'admin',
-        actief: true,
-        uid: user.uid,
-        toegevoegd: firebase.database.ServerValue.TIMESTAMP,
-        toegevoegd_door: 'bootstrap',
-        lastSeen: firebase.database.ServerValue.TIMESTAMP
-      });
-      currentRol = 'admin';
-      currentActief = true;
-      return true;
+  if(user.email===BOOTSTRAP_ADMIN_EMAIL){
+    const all=await db.ref('whitelist').once('value');
+    if(!all.exists()){
+      await db.ref('whitelist/'+slug).set({ email:user.email, naam:'Bram De Nyn', rol:'admin', actief:true, uid:user.uid, toegevoegd:firebase.database.ServerValue.TIMESTAMP, toegevoegd_door:'bootstrap', lastSeen:firebase.database.ServerValue.TIMESTAMP });
+      currentRol='admin'; return true;
     }
   }
   return false;
 }
 
-// === Access request flow ===
-async function submitAccessRequest(ev) {
+// ============ Access requests ============
+async function submitAccessRequest(ev){
   ev.preventDefault();
-  const naam = document.getElementById('reqName').value.trim();
-  const reden = document.getElementById('reqReason').value.trim();
-  const btn = document.getElementById('reqBtn');
-  if (!currentUser) return;
-  btn.disabled = true;
-  btn.textContent = 'Versturen...';
-  try {
-    const slug = emailToSlug(currentUser.email);
-    await firebase.database().ref('access-requests/' + slug).set({
-      uid: currentUser.uid,
-      email: currentUser.email,
-      naam: naam,
-      reden: reden,
-      gevraagd: firebase.database.ServerValue.TIMESTAMP,
-      status: 'pending'
-    });
-    showAccessMsg('Aanvraag verstuurd. Bram krijgt bericht en zal je toevoegen. Je mag dit venster sluiten.', 'success');
-    document.getElementById('accessRequestForm').style.display = 'none';
-  } catch (err) {
-    console.error(err);
-    showAccessMsg('Aanvraag mislukt: ' + (err.message || err.code), 'error');
-    btn.disabled = false;
-    btn.textContent = 'Aanvraag versturen';
-  }
+  const naam=document.getElementById('reqName').value.trim(), reden=document.getElementById('reqReason').value.trim();
+  const btn=document.getElementById('reqBtn'); btn.disabled=true; btn.textContent='Versturen...';
+  try{
+    await db.ref('access-requests/'+emailToSlug(currentUser.email)).set({ uid:currentUser.uid, email:currentUser.email, naam, reden, gevraagd:firebase.database.ServerValue.TIMESTAMP, status:'pending' });
+    msg('accessMsg','Aanvraag verstuurd. Bram krijgt bericht en voegt je toe. Je mag dit venster sluiten.','success');
+    document.getElementById('accessRequestForm').style.display='none';
+  }catch(e){ console.error(e); msg('accessMsg','Aanvraag mislukt: '+(e.message||e.code),'error'); btn.disabled=false; btn.textContent='Aanvraag versturen'; }
 }
 
-// === Admin views ===
-function loadAdminData() {
-  const db = firebase.database();
-  // Aanvragen (live)
-  if (unsubRequests) unsubRequests();
-  const reqRef = db.ref('access-requests').orderByChild('gevraagd');
-  const handler = snap => renderAdminRequests(snap.val() || {});
-  reqRef.on('value', handler);
-  unsubRequests = () => reqRef.off('value', handler);
-  // Personeel (eenmalig per render)
-  db.ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+// ============ Content laden (Firebase + cache) ============
+function cacheContent(){ try{ localStorage.setItem('bar28_content', JSON.stringify(content)); }catch(e){} }
+function loadCachedContent(){ try{ const c=localStorage.getItem('bar28_content'); if(c){ content=JSON.parse(c); buildFuse(); } }catch(e){} }
+function buildFuse(){
+  const arr=Object.values(content.artikels||{});
+  fuse=new Fuse(arr,{ keys:[{name:'titel',weight:3},{name:'samenvatting',weight:1.5},{name:'tags',weight:2},{name:'synoniemen',weight:3}], threshold:0.4, ignoreLocation:true });
 }
-
-function renderAdminRequests(data) {
-  const container = document.getElementById('adminRequests');
-  const entries = Object.entries(data).filter(([k,v]) => v.status !== 'rejected');
-  // Update badge
-  const badge = document.getElementById('adminBadge');
-  badge.textContent = entries.length;
-  badge.style.display = entries.length ? 'inline-block' : 'none';
-  if (!entries.length) {
-    container.innerHTML = '<div class="empty-admin">Geen openstaande aanvragen.</div>';
-    return;
-  }
-  container.innerHTML = entries.map(([slug, r]) => `
-    <div class="admin-card">
-      <div class="row1">
-        <div>
-          <div class="name">${escapeHtml(r.naam || '?')}</div>
-          <div class="email">${escapeHtml(r.email)}</div>
-        </div>
-      </div>
-      <div class="meta">Gevraagd op ${fmtDate(r.gevraagd)}</div>
-      <div class="reason">${escapeHtml(r.reden || '(geen reden opgegeven)')}</div>
-      <div class="actions">
-        <button class="btn-primary" style="padding:8px 14px;font-size:13px" onclick="approveRequest('${slug}','staff')">Goedkeuren als personeel</button>
-        <button class="btn-secondary" onclick="approveRequest('${slug}','admin')">Als admin</button>
-        <button class="btn-danger" onclick="rejectRequest('${slug}')">Weigeren</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderAdminPersonnel(data) {
-  const container = document.getElementById('adminPersonnel');
-  const entries = Object.entries(data);
-  if (!entries.length) {
-    container.innerHTML = '<div class="empty-admin">Nog geen personeel toegevoegd.</div>';
-    return;
-  }
-  container.innerHTML = entries
-    .sort((a,b) => (a[1].naam||'').localeCompare(b[1].naam||''))
-    .map(([slug, p]) => `
-    <div class="admin-card">
-      <div class="row1">
-        <div>
-          <div class="name">${escapeHtml(p.naam || '?')} <span class="role-pill ${p.rol}">${p.rol}</span></div>
-          <div class="email">${escapeHtml(p.email)}</div>
-        </div>
-      </div>
-      <div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)} ${p.lastSeen ? '· laatst gezien ' + fmtDate(p.lastSeen) : '· nog nooit ingelogd'}</div>
-      <div class="actions">
-        ${p.actief
-          ? `<button class="btn-danger" onclick="deactivatePersonnel('${slug}','${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`
-          : `<button class="btn-secondary" onclick="reactivatePersonnel('${slug}')">Heractiveren</button>`}
-      </div>
-    </div>
-  `).join('');
-}
-
-async function approveRequest(slug, rol) {
-  const db = firebase.database();
-  const reqSnap = await db.ref('access-requests/' + slug).once('value');
-  if (!reqSnap.exists()) return;
-  const r = reqSnap.val();
-  await db.ref('whitelist/' + slug).set({
-    email: r.email,
-    naam: r.naam,
-    rol: rol,
-    actief: true,
-    uid: r.uid || null,
-    toegevoegd: firebase.database.ServerValue.TIMESTAMP,
-    toegevoegd_door: currentUser.email
+function listenContent(){
+  db.ref('content').on('value', snap=>{
+    const v=snap.val()||{};
+    content={ categorieen:v.categorieen||{}, artikels:v.artikels||{}, keywords:v.keywords||{} };
+    cacheContent(); buildFuse();
+    // Als we in de lijst zitten, herrender
+    if(document.getElementById('listView').style.display!=='none'){ renderChips(); applyFilters(); }
+    if(document.getElementById('adminView').classList.contains('active')) renderAdmin();
   });
-  await db.ref('access-requests/' + slug).remove();
-  // Refresh personnel
-  db.ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
 }
 
-async function rejectRequest(slug) {
-  if (!confirm('Aanvraag weigeren?')) return;
-  await firebase.database().ref('access-requests/' + slug).remove();
+// ============ List + render ============
+function catLabel(catSlug){ const c=Object.values(content.categorieen).find(x=>x.slug===catSlug); return c?c.naam_nl:catSlug; }
+function renderChips(){
+  const cats=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
+  let html='<div class="chip '+(activeCategory==='alle'?'active':'')+'" onclick="setCat(\'alle\')">Alle</div>';
+  html+=cats.map(c=>`<div class="chip ${activeCategory===c.slug?'active':''}" onclick="setCat('${c.slug}')">${escapeHtml(c.naam_nl)}</div>`).join('');
+  document.getElementById('chips').innerHTML=html;
+}
+function setCat(slug){ activeCategory=slug; renderChips(); applyFilters(); }
+function applyFilters(){
+  const q=document.getElementById('searchInput').value.trim();
+  let items=Object.values(content.artikels);
+  if(activeCategory!=='alle') items=items.filter(a=>a.categorie===activeCategory);
+  if(q && fuse){ const res=fuse.search(q); items=res.map(r=>r.item).filter(a=>activeCategory==='alle'||a.categorie===activeCategory); }
+  items.sort((a,b)=>(a.titel||'').localeCompare(b.titel||''));
+  renderList(items);
+}
+function renderList(items){
+  const el=document.getElementById('resultList');
+  if(!items.length){ el.innerHTML='<div class="empty">Geen resultaten.</div>'; return; }
+  el.innerHTML=items.map(a=>`
+    <div class="card" onclick="openArticle('${a.id}')">
+      <div class="card-cat">${escapeHtml(catLabel(a.categorie))}</div>
+      <div class="card-title">${escapeHtml(a.titel)}</div>
+      <div class="card-summary">${escapeHtml(a.samenvatting||'')}</div>
+      <div class="card-tags">${(a.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+    </div>`).join('');
 }
 
-async function deactivatePersonnel(slug, naam) {
-  if (!confirm('Toegang intrekken voor ' + naam + '?')) return;
-  await firebase.database().ref('whitelist/' + slug).update({ actief: false });
-  firebase.database().ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
-}
-async function reactivatePersonnel(slug) {
-  await firebase.database().ref('whitelist/' + slug).update({ actief: true });
-  firebase.database().ref('whitelist').once('value').then(snap => renderAdminPersonnel(snap.val() || {}));
+// ============ Keyword highlighting ============
+function highlightKeywords(html){
+  const kws=Object.values(content.keywords);
+  if(!kws.length) return html;
+  // Bouw lijst van {term, id}, langste eerst zodat 'groot glas' voor 'glas' matcht
+  const terms=[];
+  kws.forEach(kw=>{
+    [kw.woord, ...(kw.aliassen||[])].forEach(t=>{ if(t) terms.push({term:t, id:kw.id}); });
+  });
+  terms.sort((a,b)=>b.term.length-a.term.length);
+  // Splits HTML op tags zodat we niet binnen tags vervangen
+  const parts=html.split(/(<[^>]+>)/);
+  const used=new Set();
+  for(let i=0;i<parts.length;i++){
+    if(parts[i].startsWith('<')) continue;
+    let text=parts[i];
+    terms.forEach(({term,id})=>{
+      if(used.has(id)) return; // elk keyword max 1x per artikel highlighten
+      const re=new RegExp('\\b('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')\\b','i');
+      if(re.test(text)){
+        text=text.replace(re,`<span class="kw" onclick="openKeyword('${id}')">$1</span>`);
+        used.add(id);
+      }
+    });
+    parts[i]=text;
+  }
+  return parts.join('');
 }
 
-function escapeHtml(s) {
-  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function openArticle(id){
+  const a=content.artikels[id]; if(!a)return;
+  let body=`<h1>${escapeHtml(a.titel)}</h1><div class="meta">${escapeHtml(catLabel(a.categorie))} · gewijzigd ${a.laatst_gewijzigd||''}</div>`;
+  if(a.hero_image) body+=`<img class="kw-photo" src="${escapeHtml(a.hero_image)}" alt="">`;
+  if(a.isChecklist && a.checklist){
+    if(a.intro) body+=`<p>${escapeHtml(a.intro)}</p>`;
+    body+=`<div class="checklist-section">BASIS</div>`;
+    body+=(a.checklist.basis||[]).map((it,i)=>`<div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox" id="cb${i}"><label for="cb${i}">${highlightKeywords(escapeHtml(it))}</label></div>`).join('');
+    if((a.checklist.zouOk||[]).length){
+      body+=`<div class="checklist-section">ZOU OK MOETEN ZIJN, MAAR DOEN INDIEN NIET OK</div>`;
+      body+=(a.checklist.zouOk||[]).map((it,i)=>`<div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox" id="cz${i}"><label for="cz${i}">${highlightKeywords(escapeHtml(it))}</label></div>`).join('');
+    }
+  } else {
+    body+=highlightKeywords(a.body||'');
+  }
+  body+=`<div class="modal-actions"><button class="btn-ghost" onclick="suggestKeyword('${a.id}')">Een woord verduidelijken?</button></div>`;
+  document.getElementById('articleBody').innerHTML=body;
+  showDetailView(); window.scrollTo(0,0);
+}
+function toggleCheck(el){ const cb=el.querySelector('input'); cb.checked=!cb.checked; el.classList.toggle('checked',cb.checked); }
+
+// ============ Keyword popup ============
+function openKeyword(id){
+  const kw=content.keywords[id]; if(!kw)return;
+  let html=`<button class="modal-close" onclick="closeModal()">&times;</button><h3>${escapeHtml(kw.woord)}</h3>`;
+  if(kw.foto) html+=`<img class="kw-photo" src="${escapeHtml(kw.foto)}" alt="">`;
+  html+=`<div class="kw-uitleg">${escapeHtml(kw.uitleg||'Geen uitleg toegevoegd.')}</div>`;
+  openModal(html);
+}
+function openModal(html){ document.getElementById('modalBox').innerHTML=html; document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ============ Keyword suggestie door personeel ============
+function suggestKeyword(artikelId){
+  const a=content.artikels[artikelId];
+  openModal(`<button class="modal-close" onclick="closeModal()">&times;</button>
+    <h3>Woord laten verduidelijken</h3>
+    <p class="help" style="margin-bottom:14px">Welk woord in "${escapeHtml(a?a.titel:'')}" zou je willen dat we uitleggen met een foto of beschrijving?</p>
+    <div class="form-col" style="max-width:none">
+      <input type="text" id="sugWoord" placeholder="Bv. tassenverwarmer">
+      <textarea id="sugTekst" placeholder="Optioneel: wat is er onduidelijk?"></textarea>
+      <button class="btn btn-primary" onclick="sendKeywordSuggestion('${artikelId}')">Voorstel versturen</button>
+    </div>`);
+}
+async function sendKeywordSuggestion(artikelId){
+  const woord=document.getElementById('sugWoord').value.trim();
+  if(!woord){ toast('Vul een woord in'); return; }
+  const tekst=document.getElementById('sugTekst').value.trim();
+  try{
+    await db.ref('keyword-suggesties/'+uid()).set({ woord, tekst, artikel:artikelId, door:currentUser.email, gevraagd:firebase.database.ServerValue.TIMESTAMP });
+    closeModal(); toast('Voorstel verstuurd, bedankt');
+  }catch(e){ console.error(e); toast('Versturen mislukt'); }
 }
 
-// === Init ===
+// ============ ADMIN ============
+function setAdminTab(tab){ adminTab=tab; document.querySelectorAll('.admin-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab)); renderAdmin(); }
+function renderAdmin(){
+  const el=document.getElementById('adminContent');
+  if(adminTab==='artikels') renderAdminArtikels(el);
+  else if(adminTab==='categorieen') renderAdminCategorieen(el);
+  else if(adminTab==='keywords') renderAdminKeywords(el);
+  else if(adminTab==='aanvragen') renderAdminAanvragen(el);
+  else if(adminTab==='personeel') renderAdminPersoneel(el);
+}
+
+// ---- Artikels ----
+function renderAdminArtikels(el){
+  const arr=Object.values(content.artikels).sort((a,b)=>(a.titel||'').localeCompare(b.titel||''));
+  el.innerHTML=`<button class="add-btn" onclick="editArtikel()">+ Nieuw artikel</button>`+
+    (arr.length?arr.map(a=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(a.titel)}</div><div class="sub">${escapeHtml(catLabel(a.categorie))}${a.isChecklist?' · checklist':''}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editArtikel('${a.id}')">Bewerken</button><button class="btn-danger" onclick="deleteArtikel('${a.id}','${escapeHtml(a.titel)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen artikels.</div>');
+}
+function editArtikel(id){
+  const a=id?content.artikels[id]:{ id:uid(), titel:'', categorie:Object.values(content.categorieen)[0]?.slug||'', samenvatting:'', tags:[], synoniemen:[], body:'', isChecklist:false, checklist:{basis:[],zouOk:[]} };
+  const cats=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
+  openModal(`<button class="modal-close" onclick="closeModal()">&times;</button><h3>${id?'Artikel bewerken':'Nieuw artikel'}</h3>
+    <div class="form-col" style="max-width:none;margin-top:14px">
+      <div><label class="fld">Titel</label><input type="text" id="aTitel" value="${escapeHtml(a.titel)}"></div>
+      <div><label class="fld">Categorie</label><select id="aCat">${cats.map(c=>`<option value="${c.slug}" ${a.categorie===c.slug?'selected':''}>${escapeHtml(c.naam_nl)}</option>`).join('')}</select></div>
+      <div><label class="fld">Samenvatting (1 regel)</label><input type="text" id="aSum" value="${escapeHtml(a.samenvatting||'')}"></div>
+      <div><label class="fld">Tags (komma-gescheiden)</label><input type="text" id="aTags" value="${escapeHtml((a.tags||[]).join(', '))}"></div>
+      <div><label class="fld">Synoniemen / zoekwoorden (komma-gescheiden)</label><input type="text" id="aSyn" value="${escapeHtml((a.synoniemen||[]).join(', '))}"></div>
+      <div><label class="fld"><input type="checkbox" id="aIsCheck" ${a.isChecklist?'checked':''} onchange="document.getElementById('checkFields').style.display=this.checked?'block':'none';document.getElementById('bodyField').style.display=this.checked?'none':'block'"> Dit is een checklist</label></div>
+      <div id="bodyField" style="display:${a.isChecklist?'none':'block'}"><label class="fld">Tekst (HTML toegestaan: &lt;h2&gt; &lt;p&gt; &lt;ul&gt;&lt;li&gt; &lt;strong&gt;)</label><textarea id="aBody" style="min-height:160px">${escapeHtml(a.body||'')}</textarea></div>
+      <div id="checkFields" style="display:${a.isChecklist?'block':'none'}">
+        <label class="fld">BASIS items (één per regel)</label><textarea id="aBasis" style="min-height:120px">${escapeHtml((a.checklist?.basis||[]).join('\n'))}</textarea>
+        <label class="fld" style="margin-top:10px">ZOU-OK items (één per regel)</label><textarea id="aZouOk" style="min-height:80px">${escapeHtml((a.checklist?.zouOk||[]).join('\n'))}</textarea>
+      </div>
+      <div><label class="fld">Hoofdfoto (optioneel)</label><input type="file" accept="image/*" id="aImgFile" onchange="previewImg(this,'aImgPrev')"><input type="text" id="aImg" placeholder="of plak een foto-URL" value="${escapeHtml(a.hero_image||'')}" style="margin-top:8px"><img id="aImgPrev" class="img-preview" style="display:${a.hero_image?'block':'none'}" src="${escapeHtml(a.hero_image||'')}"></div>
+      <button class="btn btn-primary" id="aSaveBtn" onclick="saveArtikel('${a.id}',${id?true:false})">Opslaan</button>
+    </div>`);
+}
+async function saveArtikel(id, isEdit){
+  const btn=document.getElementById('aSaveBtn'); btn.disabled=true; btn.textContent='Opslaan...';
+  try{
+    const isCheck=document.getElementById('aIsCheck').checked;
+    let img=document.getElementById('aImg').value.trim();
+    const file=document.getElementById('aImgFile').files[0];
+    if(file) img=await uploadImage(file,'artikels/'+id);
+    const data={
+      id, titel:document.getElementById('aTitel').value.trim(), categorie:document.getElementById('aCat').value,
+      samenvatting:document.getElementById('aSum').value.trim(),
+      tags:document.getElementById('aTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+      synoniemen:document.getElementById('aSyn').value.split(',').map(s=>s.trim()).filter(Boolean),
+      isChecklist:isCheck, hero_image:img||null,
+      laatst_gewijzigd:new Date().toLocaleDateString('nl-BE'), auteur:currentUser.email
+    };
+    if(isCheck){ data.checklist={ basis:document.getElementById('aBasis').value.split('\n').map(s=>s.trim()).filter(Boolean), zouOk:document.getElementById('aZouOk').value.split('\n').map(s=>s.trim()).filter(Boolean) }; data.body=null; }
+    else { data.body=document.getElementById('aBody').value; data.checklist=null; }
+    if(!data.titel){ toast('Titel verplicht'); btn.disabled=false; btn.textContent='Opslaan'; return; }
+    await db.ref('content/artikels/'+id).set(data);
+    closeModal(); toast(isEdit?'Artikel bijgewerkt':'Artikel toegevoegd');
+  }catch(e){ console.error(e); toast('Opslaan mislukt: '+(e.message||e.code)); btn.disabled=false; btn.textContent='Opslaan'; }
+}
+async function deleteArtikel(id,titel){ if(!confirm('Artikel "'+titel+'" verwijderen?'))return; await db.ref('content/artikels/'+id).remove(); toast('Verwijderd'); }
+
+// ---- Categorieen ----
+function renderAdminCategorieen(el){
+  const arr=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
+  el.innerHTML=`<button class="add-btn" onclick="editCat()">+ Nieuwe categorie</button>`+
+    (arr.length?arr.map(c=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(c.naam_nl)}</div><div class="sub">${escapeHtml(c.slug)}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editCat('${c.id}')">Bewerken</button><button class="btn-danger" onclick="deleteCat('${c.id}','${escapeHtml(c.naam_nl)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen categorieën.</div>');
+}
+function editCat(id){
+  const c=id?content.categorieen[id]:{ id:uid(), slug:'', naam_nl:'', naam_en:'', volgorde:Object.keys(content.categorieen).length+1 };
+  openModal(`<button class="modal-close" onclick="closeModal()">&times;</button><h3>${id?'Categorie bewerken':'Nieuwe categorie'}</h3>
+    <div class="form-col" style="max-width:none;margin-top:14px">
+      <div><label class="fld">Naam (NL)</label><input type="text" id="cNl" value="${escapeHtml(c.naam_nl)}"></div>
+      <div><label class="fld">Naam (EN)</label><input type="text" id="cEn" value="${escapeHtml(c.naam_en||'')}"></div>
+      <div><label class="fld">Slug (kleine letters, streepjes)</label><input type="text" id="cSlug" value="${escapeHtml(c.slug)}"><div class="help">Wordt automatisch gevuld als je leeg laat.</div></div>
+      <div><label class="fld">Volgorde</label><input type="text" id="cVol" value="${c.volgorde||1}"></div>
+      <button class="btn btn-primary" onclick="saveCat('${c.id}')">Opslaan</button>
+    </div>`);
+}
+async function saveCat(id){
+  const nl=document.getElementById('cNl').value.trim();
+  if(!nl){ toast('Naam verplicht'); return; }
+  let slug=document.getElementById('cSlug').value.trim() || nl.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  await db.ref('content/categorieen/'+id).set({ id, slug, naam_nl:nl, naam_en:document.getElementById('cEn').value.trim(), volgorde:parseInt(document.getElementById('cVol').value)||1 });
+  closeModal(); toast('Categorie opgeslagen');
+}
+async function deleteCat(id,naam){ if(!confirm('Categorie "'+naam+'" verwijderen? Artikels blijven bestaan maar verliezen hun categorie.'))return; await db.ref('content/categorieen/'+id).remove(); toast('Verwijderd'); }
+
+// ---- Keywords ----
+function renderAdminKeywords(el){
+  const arr=Object.values(content.keywords).sort((a,b)=>(a.woord||'').localeCompare(b.woord||''));
+  let html=`<button class="add-btn" onclick="editKeyword()">+ Nieuw keyword</button>`;
+  // Suggesties van personeel
+  db.ref('keyword-suggesties').once('value').then(snap=>{
+    const sug=snap.val()||{};
+    const sEl=document.getElementById('kwSuggesties');
+    if(!sEl)return;
+    const entries=Object.entries(sug);
+    sEl.innerHTML=entries.length? '<h2 style="font-size:13px;color:var(--warning);margin:18px 0 10px;text-transform:uppercase;letter-spacing:0.05em">Voorstellen van personeel</h2>'+entries.map(([k,s])=>`<div class="admin-card"><div class="name">${escapeHtml(s.woord)}</div><div class="sub">${escapeHtml(s.tekst||'')}</div><div class="meta">door ${escapeHtml(s.door||'?')} · ${fmtDate(s.gevraagd)}</div><div class="actions"><button class="btn-ghost" onclick="editKeywordFromSuggestion('${k}','${escapeHtml(s.woord)}')">Keyword aanmaken</button><button class="btn-danger" onclick="dismissSuggestion('${k}')">Negeren</button></div></div>`).join(''):'';
+  });
+  html+=arr.length?arr.map(k=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(k.woord)}</div><div class="sub">${escapeHtml((k.aliassen||[]).join(', '))}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editKeyword('${k.id}')">Bewerken</button><button class="btn-danger" onclick="deleteKeyword('${k.id}','${escapeHtml(k.woord)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen keywords.</div>';
+  html+='<div id="kwSuggesties"></div>';
+  el.innerHTML=html;
+}
+function editKeyword(id, prefillWoord){
+  const k=id?content.keywords[id]:{ id:uid(), woord:prefillWoord||'', aliassen:[], uitleg:'', foto:'' };
+  openModal(`<button class="modal-close" onclick="closeModal()">&times;</button><h3>${id?'Keyword bewerken':'Nieuw keyword'}</h3>
+    <div class="form-col" style="max-width:none;margin-top:14px">
+      <div><label class="fld">Woord</label><input type="text" id="kWoord" value="${escapeHtml(k.woord)}"></div>
+      <div><label class="fld">Aliassen / andere schrijfwijzen (komma-gescheiden)</label><input type="text" id="kAlias" value="${escapeHtml((k.aliassen||[]).join(', '))}"><div class="help">Bv. voor "Jigger": maatbeker, schenkmaat</div></div>
+      <div><label class="fld">Uitleg</label><textarea id="kUitleg" style="min-height:100px">${escapeHtml(k.uitleg||'')}</textarea></div>
+      <div><label class="fld">Foto (optioneel)</label><input type="file" accept="image/*" id="kImgFile" onchange="previewImg(this,'kImgPrev')"><input type="text" id="kImg" placeholder="of plak een foto-URL" value="${escapeHtml(k.foto||'')}" style="margin-top:8px"><img id="kImgPrev" class="img-preview" style="display:${k.foto?'block':'none'}" src="${escapeHtml(k.foto||'')}"></div>
+      <button class="btn btn-primary" id="kSaveBtn" onclick="saveKeyword('${k.id}')">Opslaan</button>
+    </div>`);
+}
+function editKeywordFromSuggestion(sugKey, woord){ editKeyword(null, woord); window._pendingSugKey=sugKey; }
+async function saveKeyword(id){
+  const btn=document.getElementById('kSaveBtn'); btn.disabled=true; btn.textContent='Opslaan...';
+  try{
+    const woord=document.getElementById('kWoord').value.trim();
+    if(!woord){ toast('Woord verplicht'); btn.disabled=false; btn.textContent='Opslaan'; return; }
+    let img=document.getElementById('kImg').value.trim();
+    const file=document.getElementById('kImgFile').files[0];
+    if(file) img=await uploadImage(file,'keywords/'+id);
+    await db.ref('content/keywords/'+id).set({ id, woord, aliassen:document.getElementById('kAlias').value.split(',').map(s=>s.trim()).filter(Boolean), uitleg:document.getElementById('kUitleg').value.trim(), foto:img||null });
+    if(window._pendingSugKey){ await db.ref('keyword-suggesties/'+window._pendingSugKey).remove(); window._pendingSugKey=null; }
+    closeModal(); toast('Keyword opgeslagen');
+  }catch(e){ console.error(e); toast('Opslaan mislukt: '+(e.message||e.code)); btn.disabled=false; btn.textContent='Opslaan'; }
+}
+async function deleteKeyword(id,woord){ if(!confirm('Keyword "'+woord+'" verwijderen?'))return; await db.ref('content/keywords/'+id).remove(); toast('Verwijderd'); }
+async function dismissSuggestion(key){ await db.ref('keyword-suggesties/'+key).remove(); renderAdmin(); }
+
+// ---- Foto upload ----
+function previewImg(input, prevId){ const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ const p=document.getElementById(prevId); p.src=e.target.result; p.style.display='block'; }; r.readAsDataURL(f); }
+async function uploadImage(file, path){
+  const ref=storage.ref(path+'_'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.]/g,'_'));
+  const snap=await ref.put(file);
+  return await snap.ref.getDownloadURL();
+}
+
+// ---- Aanvragen ----
+function renderAdminAanvragen(el){
+  db.ref('access-requests').once('value').then(snap=>{
+    const data=snap.val()||{};
+    const entries=Object.entries(data);
+    el.innerHTML=entries.length?entries.map(([slug,r])=>`<div class="admin-card"><div class="name">${escapeHtml(r.naam||'?')}</div><div class="email">${escapeHtml(r.email)}</div><div class="meta">Gevraagd ${fmtDate(r.gevraagd)}</div><div class="reason">${escapeHtml(r.reden||'(geen reden)')}</div><div class="actions"><button class="btn btn-primary" style="padding:8px 14px;font-size:13px" onclick="approveRequest('${slug}','staff')">Goedkeuren</button><button class="btn-ghost" onclick="approveRequest('${slug}','admin')">Als admin</button><button class="btn-danger" onclick="rejectRequest('${slug}')">Weigeren</button></div></div>`).join(''):'<div class="empty-admin">Geen openstaande aanvragen.</div>';
+  });
+}
+async function approveRequest(slug,rol){
+  const snap=await db.ref('access-requests/'+slug).once('value'); if(!snap.exists())return;
+  const r=snap.val();
+  await db.ref('whitelist/'+slug).set({ email:r.email, naam:r.naam, rol, actief:true, uid:r.uid||null, toegevoegd:firebase.database.ServerValue.TIMESTAMP, toegevoegd_door:currentUser.email });
+  await db.ref('access-requests/'+slug).remove();
+  toast('Goedgekeurd'); renderAdmin();
+}
+async function rejectRequest(slug){ if(!confirm('Aanvraag weigeren?'))return; await db.ref('access-requests/'+slug).remove(); toast('Geweigerd'); renderAdmin(); }
+
+// ---- Personeel ----
+function renderAdminPersoneel(el){
+  db.ref('whitelist').once('value').then(snap=>{
+    const data=snap.val()||{}; const entries=Object.entries(data).sort((a,b)=>(a[1].naam||'').localeCompare(b[1].naam||''));
+    el.innerHTML=entries.length?entries.map(([slug,p])=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(p.naam||'?')} <span class="role-pill ${p.rol}">${p.rol}</span></div><div class="email">${escapeHtml(p.email)}</div></div></div><div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)}${p.lastSeen?' · laatst gezien '+fmtDate(p.lastSeen):' · nog niet ingelogd'}</div><div class="actions">${p.actief?`<button class="btn-danger" onclick="setActief('${slug}',false,'${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`:`<button class="btn-ghost" onclick="setActief('${slug}',true)">Heractiveren</button>`}</div></div>`).join(''):'<div class="empty-admin">Nog geen personeel.</div>';
+  });
+}
+async function setActief(slug,val,naam){ if(!val && !confirm('Toegang intrekken voor '+naam+'?'))return; await db.ref('whitelist/'+slug).update({actief:val}); toast(val?'Geheractiveerd':'Toegang ingetrokken'); renderAdmin(); }
+
+// ============ Seed (voorbeeldcontent) ============
+async function seedIfEmpty(){
+  const snap=await db.ref('content/artikels').once('value');
+  if(snap.exists()) return;
+  if(currentRol!=='admin') return;
+  if(!confirm('De kennisbank is nog leeg. Voorbeeldcontent laden (3 artikels, categorieën, keywords)?')) return;
+  await db.ref('content').set(SEED);
+  toast('Voorbeeldcontent geladen');
+}
+const SEED = {
+  categorieen: {
+    c1:{id:'c1',slug:'recepten',naam_nl:'Recepten',naam_en:'Recipes',volgorde:1},
+    c2:{id:'c2',slug:'openen-sluiten',naam_nl:'Openen & sluiten',naam_en:'Open & close',volgorde:2},
+    c3:{id:'c3',slug:'aanvulling',naam_nl:'Aanvulling',naam_en:'Restocking',volgorde:3},
+    c4:{id:'c4',slug:'schoonmaak',naam_nl:'Schoonmaak',naam_en:'Cleaning',volgorde:4},
+    c5:{id:'c5',slug:'klantsituaties',naam_nl:'Klantsituaties',naam_en:'Customer',volgorde:5}
+  },
+  artikels: {
+    a1:{ id:'a1', titel:'Aperol Spritz', categorie:'recepten', samenvatting:'Klassieke aperitief: Cava, Aperol, bruiswater, sinaasappel.', tags:['cocktail','aperol','cava'], synoniemen:['spritz','aperitief','bubbels'], isChecklist:false, laatst_gewijzigd:'13/05/2026',
+      body:`<h2>Wat je nodig hebt</h2><ul><li>Groot glas</li><li>Rietje</li><li>4 ijsblokjes</li><li>1 partje sinaasappel</li><li>Cava</li><li>Aperol</li><li>Bruiswater (uit de tap)</li></ul><h2>Stappen</h2><ol><li><strong>Vul het grote glas</strong> met 4 ijsblokjes en steek er een rietje in.</li><li><strong>Steek een partje sinaasappel</strong> tegen de binnenkant.</li><li><strong>Schenk 3x jigger groot Cava.</strong></li><li><strong>Schenk 2x jigger groot Aperol.</strong></li><li><strong>Vul aan met bruiswater</strong> tot net onder de rand.</li></ol>` },
+    a2:{ id:'a2', titel:'Checklist opstart', categorie:'openen-sluiten', samenvatting:'Afvinkbare lijst voor wie de bar opent.', tags:['opstart','openen','ochtend'], synoniemen:['openen','opstart','ochtend','vroege shift'], isChecklist:true, laatst_gewijzigd:'13/05/2026', intro:'Doorloop deze lijst aan het begin van elke vroege of lange shift.',
+      checklist:{ basis:['Alarm uit','Inklokken AAPI','Alle lichten aan','Verwarming aan indien koud','Duvel licht, Vedett licht, LED aan','TV aan: Presentatie Pachanga','Muziek aan','Koffiemachine opstarten','Aanzetten tassenverwarmer','Bar PC opstarten','Startkassa maken','Controleren op vuil','Toiletten checken','Kleedkamers proper + ramen sluiten'], zouOk:['Binnenhal rommel opruimen','Buitenvelden rommel opruimen','Ramen en deuren proper','Terras netjes','Asbak inkom proper','Droogkast checken'] } },
+    a3:{ id:'a3', titel:'Dubbele koelkast aanvullen', categorie:'aanvulling', samenvatting:'Boven schenken, onder aanvullen, FIFO.', tags:['aanvullen','frigo','fifo'], synoniemen:['aanvullen','frigo','koelkast','bijvullen','drank op'], isChecklist:false, laatst_gewijzigd:'13/05/2026',
+      body:`<h2>Hoe werkt het</h2><ul><li><strong>Boven (glazen deur):</strong> dranken om te schenken</li><li><strong>Onder:</strong> voorraad om aan te vullen</li></ul><h2>Wanneer aanvullen</h2><p>Vul <strong>pas aan als de rij bovenaan helemaal op is</strong>.</p><h2>Stappen</h2><ol><li>Controleer welke rij leeg is</li><li>Haal de onderste rij omhoog</li><li>Vul de lege onderste rij aan met warme drank uit de kelder</li><li>Nieuwe flesjes achteraan, FIFO</li><li>Check de datum</li></ol>` }
+  },
+  keywords: {
+    k1:{ id:'k1', woord:'Jigger', aliassen:['maatbeker','schenkmaat'], uitleg:'Dubbele maatbeker om precies af te meten. De grote kant en de kleine kant hebben elk een vast volume. "Jigger groot" = de grote kant.', foto:'' },
+    k2:{ id:'k2', woord:'Groot glas', aliassen:['longdrinkglas'], uitleg:'Het hoge longdrinkglas, gebruikt voor spritz, cola en frisdranken. Niet het kleine borrelglas.', foto:'' },
+    k3:{ id:'k3', woord:'FIFO', aliassen:['first in first out'], uitleg:'First In, First Out. Oudste voorraad eerst gebruiken. Nieuwe flesjes achteraan zetten, oude vooraan.', foto:'' },
+    k4:{ id:'k4', woord:'AAPI', aliassen:[], uitleg:'Het tijdregistratiesysteem. Inklokken bij start shift, uitklokken bij einde.', foto:'' }
+  }
+};
+
+// ============ Init ============
 (async () => {
+  loadCachedContent();
   showLoading();
   await completeSignInIfLink();
   firebase.auth().onAuthStateChanged(async user => {
-    if (!user) { showLogin(); return; }
-    currentUser = user;
-    showLoading();
-    try {
-      const ok = await checkAccess(user);
-      if (ok) {
-        // Live listener voor admin: badge bijwerken bij nieuwe aanvragen
-        if (currentRol === 'admin') {
-          firebase.database().ref('access-requests').on('value', snap => {
-            const count = snap.numChildren();
-            const badge = document.getElementById('adminBadge');
-            badge.textContent = count;
-            badge.style.display = count ? 'inline-block' : 'none';
-          });
+    if(!user){ showLogin(); return; }
+    currentUser=user; showLoading();
+    try{
+      const ok=await checkAccess(user);
+      if(ok){
+        listenContent();
+        if(currentRol==='admin'){
+          db.ref('access-requests').on('value', s=>{ const c=s.numChildren(); const b=document.getElementById('adminBadge'); b.textContent=c; b.style.display=c?'inline-block':'none'; });
+          await seedIfEmpty();
         }
         showApp();
-      } else {
-        showNoAccess(user);
-      }
-    } catch (err) {
-      console.error('checkAccess fout:', err);
-      showNoAccess(user);
-    }
+      } else { showNoAccess(user); }
+    }catch(e){ console.error('checkAccess',e); showNoAccess(user); }
   });
 })();
 
-// === Wiki ===
-const articles = [
-  {
-    slug: 'aperol-spritz',
-    titel: 'Aperol Spritz',
-    cat: 'recepten',
-    catLabel: 'Recepten',
-    samenvatting: 'Klassieke aperitief: Cava, Aperol, bruiswater, sinaasappel.',
-    tags: ['cocktail', 'aperol', 'cava'],
-    synoniemen: ['spritz', 'aperitief', 'oranje cocktail', 'bubbels'],
-    body: `
-      <h1>Aperol Spritz</h1>
-      <div class="meta">Recepten · Laatst gewijzigd 13/05/2026</div>
-      <p>De klassieke aperitief van het huis. Goed gevuld glas, lichte bubbel, oranje partje als afwerking.</p>
-      <h2>Wat je nodig hebt</h2>
-      <ul>
-        <li>Groot glas</li>
-        <li>Rietje</li>
-        <li>4 ijsblokjes</li>
-        <li>1 partje sinaasappel</li>
-        <li>Cava</li>
-        <li>Aperol</li>
-        <li>Bruiswater (uit de tap)</li>
-      </ul>
-      <h2>Stappen</h2>
-      <ol>
-        <li><strong>Vul het grote glas</strong> met 4 ijsblokjes en steek er een rietje in.</li>
-        <li><strong>Steek een partje sinaasappel</strong> tegen de binnenkant van het glas.</li>
-        <li><strong>Schenk 3x jigger groot Cava</strong> in het glas.</li>
-        <li><strong>Schenk 2x jigger groot Aperol</strong> erbij.</li>
-        <li><strong>Vul aan met bruiswater</strong> uit de tap tot net onder de rand.</li>
-      </ol>
-      <h2>Veelgemaakte fouten</h2>
-      <ul>
-        <li>Te weinig ijs maakt de cocktail snel waterig</li>
-        <li>Aperol voor Cava schenken kleurt minder mooi</li>
-        <li>Te weinig bruiswater maakt de drank te zoet en te zwaar</li>
-      </ul>
-      <h2>Wat als ...</h2>
-      <ul>
-        <li><strong>... Aperol op is?</strong> Verwittig Bram en kijk in de kelder rechts vooraan</li>
-        <li><strong>... klant vraagt zonder alcohol?</strong> Crodino flesje + sinaasappel + ijs, geen Cava en geen Aperol</li>
-      </ul>
-      <h2>Gerelateerd</h2>
-      <div class="related-list">
-        <div class="related-item" onclick="showDetail('koffie-zetten')">Hoe maak je een koffie</div>
-        <div class="related-item" onclick="showDetail('dubbele-koelkast-aanvullen')">Dubbele koelkast aanvullen</div>
-      </div>
-    `
-  },
-  {
-    slug: 'checklist-opstart',
-    titel: 'Checklist opstart',
-    cat: 'openen-sluiten',
-    catLabel: 'Openen & sluiten',
-    samenvatting: 'Afvinkbare lijst voor wie de bar opent. BASIS + ZOU-OK-MOETEN-ZIJN.',
-    tags: ['opstart', 'openen', 'ochtend'],
-    synoniemen: ['openen', 'opstart', 'ochtend', 'klaarmaken', 'vroege shift'],
-    body: `
-      <h1>Checklist opstart</h1>
-      <div class="meta">Openen & sluiten · 15-20 min · Laatst gewijzigd 13/05/2026</div>
-      <p>Doorloop deze lijst aan het begin van elke vroege of lange shift. Vink af terwijl je werkt.</p>
-
-      <div class="checklist-section">BASIS</div>
-      <div id="basis"></div>
-
-      <div class="checklist-section">ZOU OK MOETEN ZIJN, MAAR DOEN INDIEN NIET OK</div>
-      <div id="zou-ok"></div>
-
-      <h2>Wat als ...</h2>
-      <ul>
-        <li><strong>... iets ontbreekt of stuk is?</strong> Noteer in het logboek en verwittig Bram via WhatsApp</li>
-        <li><strong>... het alarm gaat af?</strong> Code intoetsen binnen 30 seconden</li>
-        <li><strong>... de Bar PC niet opstart?</strong> Zie artikel "Bar PC herstart"</li>
-      </ul>
-    `,
-    isChecklist: true,
-    checklist: {
-      basis: [
-        'Alarm uit',
-        'Inklokken AAPI',
-        'Alle lichten aan (kleedkamers en trappenhal niet overdag)',
-        'Verwarming aan indien koud (winter)',
-        'Duvel licht, Vedett licht, LED strip/bak aan',
-        'TV aan: Presentatie Pachanga',
-        'Muziek aan',
-        'Koffiemachine opstarten',
-        'Aanzetten tassenverwarmer',
-        'Bar PC opstarten (1: kassa, 2: clubplanner, 3: witte kassa)',
-        'Startkassa maken',
-        'Controleren op vuil (tafels, toog, vloer)',
-        'Toiletten checken',
-        'Kleedkamers: alles proper + ramen sluiten + verwarming aan'
-      ],
-      zouOk: [
-        'Binnenhal rondgaan en rommel opruimen',
-        'Buitenvelden rondgaan en rommel opruimen',
-        'Vettige vingers/plekken weg op ramen en deuren',
-        'Terras netjes',
-        'Asbak aan de inkom proper',
-        'Droogkast checken en aanzetten indien nodig'
-      ]
-    }
-  },
-  {
-    slug: 'dubbele-koelkast-aanvullen',
-    titel: 'Dubbele koelkast aanvullen',
-    cat: 'aanvulling',
-    catLabel: 'Aanvulling',
-    samenvatting: 'Boven schenken, onder aanvullen, FIFO. Pas aanvullen als rij echt op is.',
-    tags: ['aanvullen', 'frigo', 'FIFO'],
-    synoniemen: ['aanvullen', 'frigo', 'koelkast', 'bijvullen', 'drank op', 'flesjes bij'],
-    body: `
-      <h1>Dubbele koelkast aanvullen</h1>
-      <div class="meta">Aanvulling · Laatst gewijzigd 13/05/2026</div>
-      <p>De dubbele koelkast achter de toog heeft twee niveaus: een glazen deur boven en een gesloten compartiment eronder. Beide identiek qua inhoud.</p>
-      <h2>Hoe werkt het</h2>
-      <ul>
-        <li><strong>Boven (glazen deur):</strong> dranken om aan klant te schenken</li>
-        <li><strong>Onder (gesloten):</strong> kopie van boven, voorraad om aan te vullen</li>
-      </ul>
-      <h2>Wanneer aanvullen</h2>
-      <p>Vul <strong>pas aan als de drank-rij bovenaan helemaal op is</strong>. Niet vroeger. Anders raakt de onderste voorraad uit balans.</p>
-      <h2>Stappen</h2>
-      <ol>
-        <li><strong>Controleer welke rij leeg is</strong> in het bovenste compartiment</li>
-        <li><strong>Haal alle flesjes uit de onderste rij</strong> van datzelfde drank-type omhoog</li>
-        <li><strong>Vul de lege onderste rij aan</strong> met warme drank uit de kelder</li>
-        <li><strong>Nieuwe flesjes achteraan</strong>. Oudste flesjes vooraan, FIFO</li>
-        <li><strong>Check de datum</strong>. Wat eerst vervalt, gebruik je eerst</li>
-      </ol>
-      <h2>FIFO regel</h2>
-      <p>First In, First Out. Nieuwe voorraad altijd achteraan, oudste flesjes blijven vooraan. Geldt voor elke drank in elke frigo.</p>
-      <h2>Wat als ...</h2>
-      <ul>
-        <li><strong>... drank in kelder ook op is?</strong> Op de bestellijst, WhatsApp Bram, papiertje "OP" voor het lege rijtje</li>
-        <li><strong>... de frigo niet koelt?</strong> Verwittig Bram, deur dicht houden</li>
-      </ul>
-    `
-  },
-  {
-    slug: 'koffiemachine-kuisen',
-    titel: 'Koffiemachine kuisen',
-    cat: 'schoonmaak',
-    catLabel: 'Schoonmaak',
-    samenvatting: 'Dagelijkse reiniging en wekelijkse onderhoudsbeurt.',
-    tags: ['koffie', 'koffiemachine', 'kuisen'],
-    synoniemen: ['koffie', 'koffieapparaat', 'espresso', 'reinigen', 'latte', 'cappuccino', 'cleanen'],
-    body: '<h1>Koffiemachine kuisen</h1><div class="meta">Schoonmaak · Concept</div><p><em>Artikel in opmaak.</em></p>'
-  },
-  {
-    slug: 'koffie-zetten',
-    titel: 'Hoe maak je een koffie',
-    cat: 'recepten',
-    catLabel: 'Recepten',
-    samenvatting: 'Espresso, koffie verkeerd, latte, cappuccino: stap voor stap.',
-    tags: ['koffie', 'recept'],
-    synoniemen: ['koffie', 'espresso', 'cappuccino', 'latte', 'koffie verkeerd', 'koffiebonen', 'deca'],
-    body: '<h1>Hoe maak je een koffie</h1><div class="meta">Recepten · Concept</div><p><em>Artikel in opmaak.</em></p>'
-  },
-  {
-    slug: 'huurrackets',
-    titel: 'Huurrackets uitlenen',
-    cat: 'klantsituaties',
-    catLabel: 'Klantsituaties',
-    samenvatting: 'Waar staan de huurrackets, hoe registreren, wat bij defect.',
-    tags: ['rackets', 'verhuur', 'padel'],
-    synoniemen: ['racket', 'huurracket', 'lenen', 'verhuur', 'padel materiaal', 'ballen', 'standaard voorraad'],
-    body: '<h1>Huurrackets uitlenen</h1><div class="meta">Klantsituaties · Concept</div><p><em>Artikel in opmaak.</em></p>'
-  }
-];
-
-const fuse = new Fuse(articles, {
-  keys: [
-    { name: 'titel', weight: 3 },
-    { name: 'samenvatting', weight: 1.5 },
-    { name: 'tags', weight: 2 },
-    { name: 'synoniemen', weight: 3 }
-  ],
-  threshold: 0.4,
-  ignoreLocation: true,
-  includeScore: true
-});
-
-let activeCategory = 'alle';
-
-function renderList(items) {
-  const list = document.getElementById('resultList');
-  if (!items.length) {
-    list.innerHTML = '<div class="empty">Geen resultaten. Probeer een ander zoekwoord.</div>';
-    return;
-  }
-  list.innerHTML = items.map(a => `
-    <div class="card" onclick="showDetail('${a.slug}')">
-      <div class="card-cat">${a.catLabel}</div>
-      <div class="card-title">${a.titel}</div>
-      <div class="card-summary">${a.samenvatting}</div>
-      <div class="card-tags">${a.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
-    </div>
-  `).join('');
-}
-
-function applyFilters() {
-  const q = document.getElementById('searchInput').value.trim();
-  let items = articles;
-  if (activeCategory !== 'alle') items = items.filter(a => a.cat === activeCategory);
-  if (q) {
-    const results = fuse.search(q);
-    items = results.map(r => r.item).filter(a => activeCategory === 'alle' || a.cat === activeCategory);
-  }
-  renderList(items);
-}
-
-function showDetail(slug) {
-  const article = articles.find(a => a.slug === slug);
-  if (!article) return;
-  const body = document.getElementById('articleBody');
-  body.innerHTML = article.body;
-  document.getElementById('listView').style.display = 'none';
-  if (article.isChecklist) {
-    const basis = document.getElementById('basis');
-    const zouOk = document.getElementById('zou-ok');
-    basis.innerHTML = article.checklist.basis.map((item, i) => `
-      <div class="checklist-item" onclick="toggleCheck(this)">
-        <input type="checkbox" id="b${i}">
-        <label for="b${i}">${item}</label>
-      </div>
-    `).join('');
-    zouOk.innerHTML = article.checklist.zouOk.map((item, i) => `
-      <div class="checklist-item" onclick="toggleCheck(this)">
-        <input type="checkbox" id="z${i}">
-        <label for="z${i}">${item}</label>
-      </div>
-    `).join('');
-  }
-  document.getElementById('listView').classList.add('hidden');
-  document.getElementById('detailView').classList.add('active');
-  window.scrollTo(0, 0);
-}
-
-function showList() {
-  document.getElementById('listView').classList.remove('hidden');
-  document.getElementById('listView').style.display = '';
-  document.getElementById('detailView').classList.remove('active');
-}
-
-function toggleCheck(el) {
-  const cb = el.querySelector('input[type="checkbox"]');
-  cb.checked = !cb.checked;
-  el.classList.toggle('checked', cb.checked);
-}
-
 document.getElementById('searchInput').addEventListener('input', applyFilters);
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    activeCategory = chip.dataset.cat;
-    applyFilters();
-  });
-});
 </script>
 </body>
 </html>
