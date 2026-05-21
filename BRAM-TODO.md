@@ -2,6 +2,8 @@
 
 Ik kan deze stappen niet voor jou uitvoeren (Firebase Console + GitHub UI). Loop deze lijst af, dan is alles operationeel.
 
+> Update 14/05: de app leest nu alle content live uit Firebase, heeft een admin-paneel (artikels, categorieën, keywords, foto's, personeel) en keyword-highlighting. Daardoor zijn er twee nieuwe stappen bijgekomen: RTDB rules opnieuw plakken (uitgebreid) en Firebase Storage activeren voor foto's.
+
 ## 1. Firebase: authorized domain toevoegen (verplicht)
 
 Zonder dit weigert Firebase de magic link redirect en faalt elke login.
@@ -30,6 +32,18 @@ Wat de rules doen:
 
 Extra admins toevoegen aan rules: kan later, vereist iets ingewikkelder rules met UID-mapping. Voorlopig ben jij hard-coded de enige admin.
 
+## 2b. Firebase: Storage activeren (verplicht voor foto-upload)
+
+Foto's voor artikels en keywords gaan naar Firebase Storage.
+
+1. Ga naar https://console.firebase.google.com/project/pachanga-bar/storage
+2. Klik **Get started**
+3. Kies **Start in production mode** (rules zetten we hierna)
+4. Locatie: **europe-west** (zelfde regio als de database)
+5. Na aanmaken: tab **Rules**, vervang door de inhoud van `storage.rules` (in deze repo), **Publish**
+
+Zonder Storage werkt foto-upload niet. Je kan dan wel nog foto-URL's plakken in plaats van bestanden uploaden.
+
 ## 3. Eerste login als bootstrap-admin (verplicht)
 
 1. Open https://sportico28.github.io/pachanga-bar/
@@ -38,6 +52,22 @@ Extra admins toevoegen aan rules: kan later, vereist iets ingewikkelder rules me
 4. Je belandt automatisch terug op de site en wordt ingelogd
 5. De client detecteert dat de whitelist leeg is en je `bram.denyn@gmail.com` bent, dus je krijgt automatisch een whitelist entry met rol `admin`
 6. Je ziet het tandwiel-icoon rechtsboven (admin paneel)
+7. De app vraagt of je voorbeeldcontent wil laden (3 artikels, categorieën, keywords). Klik **OK** zodat er meteen iets te zien is. Daarna beheer je alles via het tandwiel.
+
+## Admin-paneel gebruiken (tandwiel rechtsboven)
+
+Vijf tabs:
+- **Artikels**: toevoegen, bewerken, verwijderen. Checklist-optie voor opstart/sluit lijsten. Foto uploaden of URL plakken.
+- **Categorieën**: toevoegen, bewerken, volgorde bepalen.
+- **Keywords**: woorden die in artikels oplichten en klikbaar worden (bv. Jigger, Groot glas, FIFO). Met uitleg en foto. Onderaan staan voorstellen van personeel.
+- **Aanvragen**: toegangsaanvragen goedkeuren of weigeren.
+- **Personeel**: wie heeft toegang, rol, toegang intrekken.
+
+Alles wat je opslaat is **meteen live** voor alle personeel. Geen deploy nodig.
+
+## Keyword-highlighting
+
+In artikels worden bekende woorden rood onderstreept. Personeel klikt erop en krijgt een popup met uitleg + foto. Onderaan elk artikel staat een knop "Een woord verduidelijken?" waarmee personeel kan voorstellen om een woord toe te voegen. Die voorstellen verschijnen in jouw Keywords-tab.
 
 ## 4. Personeel uitnodigen
 
