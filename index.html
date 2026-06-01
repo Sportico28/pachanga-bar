@@ -71,8 +71,9 @@
 
   /* Search + chips */
   .search-wrap { padding: 16px 20px 10px; position: relative; }
-  .search-input { width: 100%; padding: 14px 16px 14px 44px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; color: var(--fg); font-size: 16px; }
-  .search-icon { position: absolute; left: 34px; top: 30px; color: var(--fg-dim); pointer-events: none; }
+  .search-input { width: 100%; padding: 14px 16px 14px 50px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; color: var(--fg); font-size: 16px; }
+  .search-icon { position: absolute; left: 32px; top: 50%; transform: translateY(-50%); color: var(--fg-dim); pointer-events: none; margin-top: 3px; }
+  .tab-badge { background: var(--accent); color: var(--fg); border-radius: 999px; padding: 1px 6px; font-size: 10px; font-weight: 800; margin-left: 6px; vertical-align: middle; }
   .chips { padding: 0 20px 14px; display: flex; gap: 8px; overflow-x: auto; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg-muted); cursor: pointer; white-space: nowrap; }
@@ -188,7 +189,7 @@
 <div class="full-screen" id="noAccessView" style="display:none;">
   <div class="login-logo"><svg class="bar28-logo bar28-logo-lg" aria-label="Bar28"><use href="#bar28-logo"/></svg></div>
   <div class="login-title">Nog geen toegang</div>
-  <div class="login-subtitle">Je e-mail (<strong id="noAccessEmail"></strong>) staat nog niet in de Bar28 personeelslijst. Vraag toegang aan en Bram krijgt je aanvraag.</div>
+  <div class="login-subtitle">Je e-mail (<strong id="noAccessEmail"></strong>) staat nog niet in de Bar28 personeelslijst. Vraag toegang aan en we kijken je aanvraag zo snel mogelijk na.</div>
   <form class="form-col" id="accessRequestForm" onsubmit="submitAccessRequest(event)">
     <input type="text" id="reqName" placeholder="Je naam" required>
     <textarea id="reqReason" placeholder="Korte reden (bv. nieuwe medewerker, start deze week)" required></textarea>
@@ -220,8 +221,8 @@
   <div class="admin-tabs" id="adminTabs">
     <div class="admin-tab active" data-tab="artikels" onclick="setAdminTab('artikels')">Artikels</div>
     <div class="admin-tab" data-tab="categorieen" onclick="setAdminTab('categorieen')">Categorieën</div>
-    <div class="admin-tab" data-tab="keywords" onclick="setAdminTab('keywords')">Keywords</div>
-    <div class="admin-tab" data-tab="aanvragen" onclick="setAdminTab('aanvragen')">Aanvragen</div>
+    <div class="admin-tab" data-tab="keywords" onclick="setAdminTab('keywords')">Keywords<span class="tab-badge" id="badgeKeywords" style="display:none">0</span></div>
+    <div class="admin-tab" data-tab="aanvragen" onclick="setAdminTab('aanvragen')">Aanvragen<span class="tab-badge" id="badgeAanvragen" style="display:none">0</span></div>
     <div class="admin-tab" data-tab="personeel" onclick="setAdminTab('personeel')">Personeel</div>
   </div>
   <div class="admin-section" id="adminContent"></div>
@@ -248,7 +249,7 @@ const FIREBASE_CONFIG = {
 firebase.initializeApp(FIREBASE_CONFIG);
 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => console.warn('persist', e));
 
-const BOOTSTRAP_ADMIN_EMAIL = 'bram.denyn@gmail.com';
+const BOOTSTRAP_ADMIN_EMAIL = 'info@sportico28.club';
 const db = firebase.database();
 
 // ============ State ============
@@ -320,7 +321,7 @@ async function checkAccess(user){
   if(user.email===BOOTSTRAP_ADMIN_EMAIL){
     const all=await db.ref('whitelist').once('value');
     if(!all.exists()){
-      await db.ref('whitelist/'+slug).set({ email:user.email, naam:'Bram De Nyn', rol:'admin', actief:true, uid:user.uid, toegevoegd:firebase.database.ServerValue.TIMESTAMP, toegevoegd_door:'bootstrap', lastSeen:firebase.database.ServerValue.TIMESTAMP });
+      await db.ref('whitelist/'+slug).set({ email:user.email, naam:'Bar28 admin', rol:'admin', actief:true, uid:user.uid, toegevoegd:firebase.database.ServerValue.TIMESTAMP, toegevoegd_door:'bootstrap', lastSeen:firebase.database.ServerValue.TIMESTAMP });
       currentRol='admin'; return true;
     }
   }
@@ -334,7 +335,7 @@ async function submitAccessRequest(ev){
   const btn=document.getElementById('reqBtn'); btn.disabled=true; btn.textContent='Versturen...';
   try{
     await db.ref('access-requests/'+emailToSlug(currentUser.email)).set({ uid:currentUser.uid, email:currentUser.email, naam, reden, gevraagd:firebase.database.ServerValue.TIMESTAMP, status:'pending' });
-    msg('accessMsg','Aanvraag verstuurd. Bram krijgt bericht en voegt je toe. Je mag dit venster sluiten.','success');
+    msg('accessMsg','Aanvraag verstuurd. De beheerder krijgt je aanvraag en voegt je toe. Je mag dit venster sluiten.','success');
     document.getElementById('accessRequestForm').style.display='none';
   }catch(e){ console.error(e); msg('accessMsg','Aanvraag mislukt: '+(e.message||e.code),'error'); btn.disabled=false; btn.textContent='Aanvraag versturen'; }
 }
@@ -596,6 +597,20 @@ async function saveKeyword(id){
 async function deleteKeyword(id,woord){ if(!confirm('Keyword "'+woord+'" verwijderen?'))return; await db.ref('content/keywords/'+id).remove(); toast('Verwijderd'); }
 async function dismissSuggestion(key){ await db.ref('keyword-suggesties/'+key).remove(); renderAdmin(); }
 
+// ---- Admin badges (tandwiel + per tab) ----
+const _badgeCounts = { aanvragen: 0, keywords: 0 };
+function _updateBadges(){
+  const total = _badgeCounts.aanvragen + _badgeCounts.keywords;
+  const setBadge = (id, n) => { const b = document.getElementById(id); if(!b) return; b.textContent = n; b.style.display = n ? 'inline-block' : 'none'; };
+  setBadge('adminBadge', total);
+  setBadge('badgeAanvragen', _badgeCounts.aanvragen);
+  setBadge('badgeKeywords', _badgeCounts.keywords);
+}
+function setupAdminBadges(){
+  db.ref('access-requests').on('value', s => { _badgeCounts.aanvragen = s.numChildren(); _updateBadges(); });
+  db.ref('keyword-suggesties').on('value', s => { _badgeCounts.keywords = s.numChildren(); _updateBadges(); });
+}
+
 // ---- Aanvragen ----
 function renderAdminAanvragen(el){
   db.ref('access-requests').once('value').then(snap=>{
@@ -668,7 +683,7 @@ const SEED = {
       if(ok){
         listenContent();
         if(currentRol==='admin'){
-          db.ref('access-requests').on('value', s=>{ const c=s.numChildren(); const b=document.getElementById('adminBadge'); b.textContent=c; b.style.display=c?'inline-block':'none'; });
+          setupAdminBadges();
           await seedIfEmpty();
         }
         showApp();
