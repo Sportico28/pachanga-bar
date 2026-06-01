@@ -616,7 +616,7 @@ function renderAdminAanvragen(el){
   db.ref('access-requests').once('value').then(snap=>{
     const data=snap.val()||{};
     const entries=Object.entries(data);
-    el.innerHTML=entries.length?entries.map(([slug,r])=>`<div class="admin-card"><div class="name">${escapeHtml(r.naam||'?')}</div><div class="email">${escapeHtml(r.email)}</div><div class="meta">Gevraagd ${fmtDate(r.gevraagd)}</div><div class="reason">${escapeHtml(r.reden||'(geen reden)')}</div><div class="actions"><button class="btn btn-primary" style="padding:8px 14px;font-size:13px" onclick="approveRequest('${slug}','staff')">Goedkeuren</button><button class="btn-ghost" onclick="approveRequest('${slug}','admin')">Als admin</button><button class="btn-danger" onclick="rejectRequest('${slug}')">Weigeren</button></div></div>`).join(''):'<div class="empty-admin">Geen openstaande aanvragen.</div>';
+    el.innerHTML=entries.length?entries.map(([slug,r])=>`<div class="admin-card"><div class="name">${escapeHtml(r.naam||'?')}</div><div class="email">${escapeHtml(r.email)}</div><div class="meta">Gevraagd ${fmtDate(r.gevraagd)}</div><div class="reason">${escapeHtml(r.reden||'(geen reden)')}</div><div class="actions"><button class="btn btn-primary" style="padding:8px 14px;font-size:13px" onclick="approveRequest('${slug}','staff')">Toelaten als personeel</button><button class="btn-ghost" onclick="approveRequest('${slug}','admin')">Toelaten als admin</button><button class="btn-danger" onclick="rejectRequest('${slug}')">Weigeren</button></div></div>`).join(''):'<div class="empty-admin">Geen openstaande aanvragen.</div>';
   });
 }
 async function approveRequest(slug,rol){
@@ -632,10 +632,25 @@ async function rejectRequest(slug){ if(!confirm('Aanvraag weigeren?'))return; aw
 function renderAdminPersoneel(el){
   db.ref('whitelist').once('value').then(snap=>{
     const data=snap.val()||{}; const entries=Object.entries(data).sort((a,b)=>(a[1].naam||'').localeCompare(b[1].naam||''));
-    el.innerHTML=entries.length?entries.map(([slug,p])=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(p.naam||'?')} <span class="role-pill ${p.rol}">${p.rol}</span></div><div class="email">${escapeHtml(p.email)}</div></div></div><div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)}${p.lastSeen?' · laatst gezien '+fmtDate(p.lastSeen):' · nog niet ingelogd'}</div><div class="actions">${p.actief?`<button class="btn-danger" onclick="setActief('${slug}',false,'${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`:`<button class="btn-ghost" onclick="setActief('${slug}',true)">Heractiveren</button>`}</div></div>`).join(''):'<div class="empty-admin">Nog geen personeel.</div>';
+    el.innerHTML=entries.length?entries.map(([slug,p])=>{
+      const rolBtn = p.rol==='admin'
+        ? `<button class="btn-ghost" onclick="setRol('${slug}','staff','${escapeHtml(p.naam||p.email)}')">Maak personeel</button>`
+        : `<button class="btn-ghost" onclick="setRol('${slug}','admin','${escapeHtml(p.naam||p.email)}')">Maak admin</button>`;
+      const actBtn = p.actief
+        ? `<button class="btn-danger" onclick="setActief('${slug}',false,'${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`
+        : `<button class="btn-ghost" onclick="setActief('${slug}',true)">Heractiveren</button>`;
+      return `<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(p.naam||'?')} <span class="role-pill ${p.rol}">${p.rol}</span></div><div class="email">${escapeHtml(p.email)}</div></div></div><div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)}${p.lastSeen?' · laatst gezien '+fmtDate(p.lastSeen):' · nog niet ingelogd'}</div><div class="actions">${rolBtn}${actBtn}</div></div>`;
+    }).join(''):'<div class="empty-admin">Nog geen personeel.</div>';
   });
 }
 async function setActief(slug,val,naam){ if(!val && !confirm('Toegang intrekken voor '+naam+'?'))return; await db.ref('whitelist/'+slug).update({actief:val}); toast(val?'Geheractiveerd':'Toegang ingetrokken'); renderAdmin(); }
+async function setRol(slug,nieuwRol,naam){
+  const verb = nieuwRol==='admin' ? 'tot admin promoten' : 'tot personeel terugzetten';
+  if(!confirm(naam+' '+verb+'?'))return;
+  await db.ref('whitelist/'+slug).update({rol:nieuwRol});
+  toast('Rol bijgewerkt');
+  renderAdmin();
+}
 
 // ============ Seed (voorbeeldcontent) ============
 async function seedIfEmpty(){
