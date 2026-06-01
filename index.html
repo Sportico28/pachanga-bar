@@ -12,7 +12,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <style>
   :root {
     --bg: #000000; --bg-elev: #0F0F0F; --bg-elev2: #181818;
@@ -251,7 +250,6 @@ firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e => 
 
 const BOOTSTRAP_ADMIN_EMAIL = 'bram.denyn@gmail.com';
 const db = firebase.database();
-const storage = firebase.storage();
 
 // ============ State ============
 let currentUser = null, currentRol = null;
@@ -504,7 +502,7 @@ function editArtikel(id){
         <label class="fld">BASIS items (één per regel)</label><textarea id="aBasis" style="min-height:120px">${escapeHtml((a.checklist?.basis||[]).join('\n'))}</textarea>
         <label class="fld" style="margin-top:10px">ZOU-OK items (één per regel)</label><textarea id="aZouOk" style="min-height:80px">${escapeHtml((a.checklist?.zouOk||[]).join('\n'))}</textarea>
       </div>
-      <div><label class="fld">Hoofdfoto (optioneel)</label><input type="file" accept="image/*" id="aImgFile" onchange="previewImg(this,'aImgPrev')"><input type="text" id="aImg" placeholder="of plak een foto-URL" value="${escapeHtml(a.hero_image||'')}" style="margin-top:8px"><img id="aImgPrev" class="img-preview" style="display:${a.hero_image?'block':'none'}" src="${escapeHtml(a.hero_image||'')}"></div>
+      <div><label class="fld">Hoofdfoto-URL (optioneel)</label><input type="text" id="aImg" placeholder="https://..." value="${escapeHtml(a.hero_image||'')}" oninput="document.getElementById('aImgPrev').src=this.value;document.getElementById('aImgPrev').style.display=this.value?'block':'none'"><img id="aImgPrev" class="img-preview" style="display:${a.hero_image?'block':'none'}" src="${escapeHtml(a.hero_image||'')}"></div>
       <button class="btn btn-primary" id="aSaveBtn" onclick="saveArtikel('${a.id}',${id?true:false})">Opslaan</button>
     </div>`);
 }
@@ -512,9 +510,7 @@ async function saveArtikel(id, isEdit){
   const btn=document.getElementById('aSaveBtn'); btn.disabled=true; btn.textContent='Opslaan...';
   try{
     const isCheck=document.getElementById('aIsCheck').checked;
-    let img=document.getElementById('aImg').value.trim();
-    const file=document.getElementById('aImgFile').files[0];
-    if(file) img=await uploadImage(file,'artikels/'+id);
+    const img=document.getElementById('aImg').value.trim();
     const data={
       id, titel:document.getElementById('aTitel').value.trim(), categorie:document.getElementById('aCat').value,
       samenvatting:document.getElementById('aSum').value.trim(),
@@ -581,7 +577,7 @@ function editKeyword(id, prefillWoord){
       <div><label class="fld">Woord</label><input type="text" id="kWoord" value="${escapeHtml(k.woord)}"></div>
       <div><label class="fld">Aliassen / andere schrijfwijzen (komma-gescheiden)</label><input type="text" id="kAlias" value="${escapeHtml((k.aliassen||[]).join(', '))}"><div class="help">Bv. voor "Jigger": maatbeker, schenkmaat</div></div>
       <div><label class="fld">Uitleg</label><textarea id="kUitleg" style="min-height:100px">${escapeHtml(k.uitleg||'')}</textarea></div>
-      <div><label class="fld">Foto (optioneel)</label><input type="file" accept="image/*" id="kImgFile" onchange="previewImg(this,'kImgPrev')"><input type="text" id="kImg" placeholder="of plak een foto-URL" value="${escapeHtml(k.foto||'')}" style="margin-top:8px"><img id="kImgPrev" class="img-preview" style="display:${k.foto?'block':'none'}" src="${escapeHtml(k.foto||'')}"></div>
+      <div><label class="fld">Foto-URL (optioneel)</label><input type="text" id="kImg" placeholder="https://..." value="${escapeHtml(k.foto||'')}" oninput="document.getElementById('kImgPrev').src=this.value;document.getElementById('kImgPrev').style.display=this.value?'block':'none'"><img id="kImgPrev" class="img-preview" style="display:${k.foto?'block':'none'}" src="${escapeHtml(k.foto||'')}"></div>
       <button class="btn btn-primary" id="kSaveBtn" onclick="saveKeyword('${k.id}')">Opslaan</button>
     </div>`);
 }
@@ -591,9 +587,7 @@ async function saveKeyword(id){
   try{
     const woord=document.getElementById('kWoord').value.trim();
     if(!woord){ toast('Woord verplicht'); btn.disabled=false; btn.textContent='Opslaan'; return; }
-    let img=document.getElementById('kImg').value.trim();
-    const file=document.getElementById('kImgFile').files[0];
-    if(file) img=await uploadImage(file,'keywords/'+id);
+    const img=document.getElementById('kImg').value.trim();
     await db.ref('content/keywords/'+id).set({ id, woord, aliassen:document.getElementById('kAlias').value.split(',').map(s=>s.trim()).filter(Boolean), uitleg:document.getElementById('kUitleg').value.trim(), foto:img||null });
     if(window._pendingSugKey){ await db.ref('keyword-suggesties/'+window._pendingSugKey).remove(); window._pendingSugKey=null; }
     closeModal(); toast('Keyword opgeslagen');
@@ -601,14 +595,6 @@ async function saveKeyword(id){
 }
 async function deleteKeyword(id,woord){ if(!confirm('Keyword "'+woord+'" verwijderen?'))return; await db.ref('content/keywords/'+id).remove(); toast('Verwijderd'); }
 async function dismissSuggestion(key){ await db.ref('keyword-suggesties/'+key).remove(); renderAdmin(); }
-
-// ---- Foto upload ----
-function previewImg(input, prevId){ const f=input.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ const p=document.getElementById(prevId); p.src=e.target.result; p.style.display='block'; }; r.readAsDataURL(f); }
-async function uploadImage(file, path){
-  const ref=storage.ref(path+'_'+Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.]/g,'_'));
-  const snap=await ref.put(file);
-  return await snap.ref.getDownloadURL();
-}
 
 // ---- Aanvragen ----
 function renderAdminAanvragen(el){
