@@ -375,8 +375,8 @@ function listenContent(){
 function catLabel(catSlug){ const c=Object.values(content.categorieen).find(x=>x.slug===catSlug); return c?c.naam_nl:catSlug; }
 function renderChips(){
   const cats=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
-  let html='<div class="chip '+(activeCategory==='alle'?'active':'')+'" onclick="setCat(\'alle\')">Alle</div>';
-  html+=cats.map(c=>`<div class="chip ${activeCategory===c.slug?'active':''}" onclick="setCat('${c.slug}')">${escapeHtml(c.naam_nl)}</div>`).join('');
+  let html=cats.map(c=>`<div class="chip ${activeCategory===c.slug?'active':''}" onclick="setCat('${c.slug}')">${escapeHtml(c.naam_nl)}</div>`).join('');
+  html+='<div class="chip '+(activeCategory==='alle'?'active':'')+'" onclick="setCat(\'alle\')">Alle</div>';
   document.getElementById('chips').innerHTML=html;
 }
 function setCat(slug){ activeCategory=slug; renderChips(); applyFilters(); }
