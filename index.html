@@ -269,7 +269,11 @@ const db = firebase.database();
 let currentUser = null, currentRol = null;
 let content = { categorieen: {}, artikels: {}, keywords: {} };
 let fuse = null;
-let activeCategory = 'alle';
+let activeCategory = null; // wordt op eerste-categorie gezet zodra content geladen is
+function defaultCategorySlug(){
+  const cats = Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
+  return cats[0] ? cats[0].slug : 'alle';
+}
 let adminTab = 'artikels';
 
 // ============ View helpers ============
@@ -375,6 +379,7 @@ function listenContent(){
 function catLabel(catSlug){ const c=Object.values(content.categorieen).find(x=>x.slug===catSlug); return c?c.naam_nl:catSlug; }
 function renderChips(){
   const cats=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
+  if(activeCategory===null) activeCategory = defaultCategorySlug();
   let html=cats.map(c=>`<div class="chip ${activeCategory===c.slug?'active':''}" onclick="setCat('${c.slug}')">${escapeHtml(c.naam_nl)}</div>`).join('');
   html+='<div class="chip '+(activeCategory==='alle'?'active':'')+'" onclick="setCat(\'alle\')">Alle</div>';
   document.getElementById('chips').innerHTML=html;
@@ -383,8 +388,8 @@ function setCat(slug){ activeCategory=slug; renderChips(); applyFilters(); }
 function applyFilters(){
   const q=document.getElementById('searchInput').value.trim();
   let items=Object.values(content.artikels);
-  if(activeCategory!=='alle') items=items.filter(a=>a.categorie===activeCategory);
-  if(q && fuse){ const res=fuse.search(q); items=res.map(r=>r.item).filter(a=>activeCategory==='alle'||a.categorie===activeCategory); }
+  if(activeCategory && activeCategory!=='alle') items=items.filter(a=>a.categorie===activeCategory);
+  if(q && fuse){ const res=fuse.search(q); items=res.map(r=>r.item).filter(a=>!activeCategory||activeCategory==='alle'||a.categorie===activeCategory); }
   items.sort((a,b)=>(a.titel||'').localeCompare(b.titel||''));
   renderList(items);
 }
