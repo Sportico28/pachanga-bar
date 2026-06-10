@@ -4,39 +4,40 @@
     ".write": false,
 
     "whitelist": {
-      ".read": "auth != null",
+      ".read": "auth != null && (root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin' || auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com')",
       "$slug": {
-        ".write": "auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com'"
+        ".read": "auth != null && $slug === auth.token.email.replace('.', ',')",
+        ".write": "auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com' || root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin'"
       }
     },
 
     "access-requests": {
-      ".read": "auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com'",
+      ".read": "auth != null && (root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin' || auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com')",
       "$slug": {
-        ".write": "auth != null && ((newData.exists() && newData.child('uid').val() == auth.uid && newData.child('email').val() == auth.token.email) || auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com')"
+        ".write": "auth != null && ((newData.exists() && newData.child('uid').val() === auth.uid && newData.child('email').val() === auth.token.email) || auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com' || root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin')"
       }
     },
 
     "content": {
-      ".read": "auth != null",
-      ".write": "auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com'"
+      ".read": "auth != null && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true",
+      ".write": "auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com' || root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin'"
     },
 
     "keyword-suggesties": {
-      ".read": "auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com'",
+      ".read": "auth != null && (root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin' || auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com')",
       "$id": {
-        ".write": "auth != null && ((newData.exists() && newData.child('door').val() == auth.token.email) || auth.token.email == 'info@sportico28.club' || auth.token.email == 'bram.denyn@gmail.com')"
+        ".write": "auth != null && ((newData.exists() && newData.child('door').val() === auth.token.email && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true) || auth.token.email === 'info@sportico28.club' || auth.token.email === 'bram.denyn@gmail.com' || root.child('whitelist').child(auth.token.email.replace('.', ',')).child('rol').val() === 'admin')"
       }
     },
 
     "voorstellen": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true",
+      ".write": "auth != null && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true"
     },
 
     "logboek": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true",
+      ".write": "auth != null && root.child('whitelist').child(auth.token.email.replace('.', ',')).child('actief').val() === true"
     }
   }
 }
