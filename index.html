@@ -94,6 +94,18 @@
   .chip { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg-elev); border: 1px solid var(--border); color: var(--fg-muted); cursor: pointer; white-space: nowrap; }
   .chip.active { background: var(--accent); color: var(--fg); border-color: var(--accent); }
 
+  /* Gouden regels banner */
+  .gouden-regels { margin: 16px 20px 4px; background: linear-gradient(180deg, rgba(220,53,80,0.10), rgba(220,53,80,0.02)); border: 1px solid var(--accent); border-radius: 16px; overflow: hidden; }
+  .gr-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; user-select: none; }
+  .gr-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent); }
+  .gr-chevron { transition: transform 0.2s; color: var(--accent); }
+  .gr-chevron.open { transform: rotate(180deg); }
+  .gr-list { list-style: none; padding: 0 16px 14px; margin: 0; }
+  .gr-list li { position: relative; padding: 8px 0 8px 30px; font-size: 14px; line-height: 1.45; border-top: 1px solid rgba(220,53,80,0.18); counter-increment: gr; }
+  .gr-list li:first-child { border-top: none; }
+  .gr-list li::before { content: counter(gr); position: absolute; left: 0; top: 8px; width: 20px; height: 20px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+  .gr-list { counter-reset: gr; }
+
   /* Article list */
   .list { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
   .card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 16px; padding: 16px; cursor: pointer; }
@@ -216,6 +228,7 @@
 
 <!-- LIST VIEW -->
 <div class="list-view" id="listView" style="display:none;">
+  <div class="gouden-regels" id="goudenRegels"></div>
   <div class="search-wrap">
     <input type="text" class="search-input" placeholder="Zoek alles (bv. koffie, aperol, fifo)" id="searchInput">
   </div>
@@ -234,6 +247,7 @@
   <div class="back" onclick="showApp()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg> Terug naar app</div>
   <div class="admin-tabs" id="adminTabs">
     <div class="admin-tab active" data-tab="artikels" onclick="setAdminTab('artikels')">Artikels</div>
+    <div class="admin-tab" data-tab="huisregels" onclick="setAdminTab('huisregels')">Huisregels</div>
     <div class="admin-tab" data-tab="categorieen" onclick="setAdminTab('categorieen')">Categorieën</div>
     <div class="admin-tab" data-tab="keywords" onclick="setAdminTab('keywords')">Keywords<span class="tab-badge" id="badgeKeywords" style="display:none">0</span></div>
     <div class="admin-tab" data-tab="aanvragen" onclick="setAdminTab('aanvragen')">Aanvragen<span class="tab-badge" id="badgeAanvragen" style="display:none">0</span></div>
@@ -268,7 +282,17 @@ const db = firebase.database();
 
 // ============ State ============
 let currentUser = null, currentRol = null;
-let content = { categorieen: {}, artikels: {}, keywords: {} };
+let content = { categorieen: {}, artikels: {}, keywords: {}, goudenRegels: null };
+
+// Standaard gouden regels (baked-in). Admin kan deze overschrijven via Huisregels-tab.
+const DEFAULT_GOUDEN_REGELS = [
+  'Groet elke klant binnen 30 seconden, ook als het druk is. Oogcontact en een glimlach.',
+  'Ruim een tafel af zodra de gasten weg zijn. Een lege vuile tafel is een gemiste verkoop.',
+  'Hou de bar droog en proper: veeg gemorste drank meteen weg.',
+  'Werk volgens de checklists in deze app. Twijfel je? Zoek het op of vraag een collega.',
+  'Een klacht? Luister, los op wat je kan, en betrek de shiftverantwoordelijke als het niet lukt.',
+  'Jij bent het gezicht van Pachanga. Vriendelijk, rustig en verzorgd, ook op drukke momenten.'
+];
 let fuse = null;
 let activeCategory = null; // wordt op eerste-categorie gezet zodra content geladen is
 function defaultCategorySlug(){
@@ -276,6 +300,8 @@ function defaultCategorySlug(){
   return cats[0] ? cats[0].slug : 'alle';
 }
 let adminTab = 'artikels';
+let _sugCache = {};        // cache van keyword-suggesties (key -> data), vermijdt user-data in onclick
+let _personeelCache = {};  // cache van whitelist (slug -> data), idem
 
 // ============ View helpers ============
 function hideAll() {
@@ -293,8 +319,22 @@ function showApp() {
   document.getElementById('userChip').style.display = 'flex';
   document.getElementById('userEmail').textContent = currentUser.email;
   document.getElementById('adminBtn').style.display = (currentRol==='admin') ? 'flex' : 'none';
-  renderChips(); applyFilters();
+  renderGoudenRegels(); renderChips(); applyFilters();
 }
+
+// ============ Gouden regels (vaste sectie bovenaan) ============
+function goudenRegelsList(){ const g=content.goudenRegels; return (Array.isArray(g)&&g.length)?g:DEFAULT_GOUDEN_REGELS; }
+function renderGoudenRegels(){
+  const el=document.getElementById('goudenRegels'); if(!el)return;
+  const collapsed=localStorage.getItem('bar28_gr_collapsed')==='1';
+  const rules=goudenRegelsList();
+  el.innerHTML=`<div class="gr-head" onclick="toggleGoudenRegels()">
+      <div class="gr-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 8.5 22 9.3 17 14 18.3 21 12 17.5 5.7 21 7 14 2 9.3 9 8.5 12 2"/></svg> Gouden regels</div>
+      <svg class="gr-chevron ${collapsed?'':'open'}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <ol class="gr-list" style="display:${collapsed?'none':'block'}">${rules.map(r=>`<li>${escapeHtml(r)}</li>`).join('')}</ol>`;
+}
+function toggleGoudenRegels(){ const c=localStorage.getItem('bar28_gr_collapsed')==='1'; localStorage.setItem('bar28_gr_collapsed', c?'0':'1'); renderGoudenRegels(); }
 function showDetailView() { hideAll(); document.getElementById('header').style.display='flex'; document.getElementById('detailView').classList.add('active'); }
 function showAdmin() { if(currentRol!=='admin')return; hideAll(); document.getElementById('header').style.display='flex'; document.getElementById('adminView').classList.add('active'); renderAdmin(); }
 
@@ -368,10 +408,10 @@ function buildFuse(){
 function listenContent(){
   db.ref('content').on('value', snap=>{
     const v=snap.val()||{};
-    content={ categorieen:v.categorieen||{}, artikels:v.artikels||{}, keywords:v.keywords||{} };
+    content={ categorieen:v.categorieen||{}, artikels:v.artikels||{}, keywords:v.keywords||{}, goudenRegels:v.goudenRegels||null };
     cacheContent(); buildFuse();
     // Als we in de lijst zitten, herrender
-    if(document.getElementById('listView').style.display!=='none'){ renderChips(); applyFilters(); }
+    if(document.getElementById('listView').style.display!=='none'){ renderGoudenRegels(); renderChips(); applyFilters(); }
     if(document.getElementById('adminView').classList.contains('active')) renderAdmin();
   });
 }
@@ -494,6 +534,7 @@ function setAdminTab(tab){ adminTab=tab; document.querySelectorAll('.admin-tab')
 function renderAdmin(){
   const el=document.getElementById('adminContent');
   if(adminTab==='artikels') renderAdminArtikels(el);
+  else if(adminTab==='huisregels') renderAdminHuisregels(el);
   else if(adminTab==='categorieen') renderAdminCategorieen(el);
   else if(adminTab==='keywords') renderAdminKeywords(el);
   else if(adminTab==='aanvragen') renderAdminAanvragen(el);
@@ -504,7 +545,7 @@ function renderAdmin(){
 function renderAdminArtikels(el){
   const arr=Object.values(content.artikels).sort((a,b)=>(a.titel||'').localeCompare(b.titel||''));
   el.innerHTML=`<button class="add-btn" onclick="editArtikel()">+ Nieuw artikel</button>`+
-    (arr.length?arr.map(a=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(a.titel)}</div><div class="sub">${escapeHtml(catLabel(a.categorie))}${a.isChecklist?' · checklist':''}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editArtikel('${a.id}')">Bewerken</button><button class="btn-danger" onclick="deleteArtikel('${a.id}','${escapeHtml(a.titel)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen artikels.</div>');
+    (arr.length?arr.map(a=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(a.titel)}</div><div class="sub">${escapeHtml(catLabel(a.categorie))}${a.isChecklist?' · checklist':''}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editArtikel('${a.id}')">Bewerken</button><button class="btn-danger" onclick="deleteArtikel('${a.id}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen artikels.</div>');
 }
 function editArtikel(id){
   const a=id?content.artikels[id]:{ id:uid(), titel:'', categorie:Object.values(content.categorieen)[0]?.slug||'', samenvatting:'', tags:[], synoniemen:[], body:'', isChecklist:false, checklist:{basis:[],zouOk:[]} };
@@ -546,13 +587,34 @@ async function saveArtikel(id, isEdit){
     closeModal(); toast(isEdit?'Artikel bijgewerkt':'Artikel toegevoegd');
   }catch(e){ console.error(e); toast('Opslaan mislukt: '+(e.message||e.code)); btn.disabled=false; btn.textContent='Opslaan'; }
 }
-async function deleteArtikel(id,titel){ if(!confirm('Artikel "'+titel+'" verwijderen?'))return; await db.ref('content/artikels/'+id).remove(); toast('Verwijderd'); }
+async function deleteArtikel(id){ const a=content.artikels[id]; if(!a)return; if(!confirm('Artikel "'+a.titel+'" verwijderen?'))return; await db.ref('content/artikels/'+id).remove(); toast('Verwijderd'); }
+
+// ---- Huisregels (gouden regels) ----
+function renderAdminHuisregels(el){
+  const rules=goudenRegelsList();
+  const isDefault=!(Array.isArray(content.goudenRegels)&&content.goudenRegels.length);
+  el.innerHTML=`<p class="help" style="margin-bottom:10px">Eén regel per lijn. Deze verschijnen bovenaan de app voor al het personeel.${isDefault?' <strong>Nu staat de standaardlijst getoond.</strong> Pas aan en sla op om je eigen lijst te gebruiken.':''}</p>
+    <textarea id="grText" style="min-height:240px;width:100%">${escapeHtml(rules.join('\n'))}</textarea>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn btn-primary" id="grSave" style="flex:1" onclick="saveGoudenRegels()">Opslaan</button>
+      ${isDefault?'':'<button class="btn-ghost" onclick="resetGoudenRegels()">Terug naar standaard</button>'}
+    </div>`;
+}
+async function saveGoudenRegels(){
+  const btn=document.getElementById('grSave'); btn.disabled=true; btn.textContent='Opslaan...';
+  try{
+    const lines=document.getElementById('grText').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    await db.ref('content/goudenRegels').set(lines.length?lines:null);
+    toast('Gouden regels opgeslagen');
+  }catch(e){ console.error(e); toast('Opslaan mislukt: '+(e.message||e.code)); btn.disabled=false; btn.textContent='Opslaan'; }
+}
+async function resetGoudenRegels(){ if(!confirm('Terug naar de standaardlijst?'))return; await db.ref('content/goudenRegels').remove(); toast('Teruggezet op standaard'); renderAdmin(); }
 
 // ---- Categorieen ----
 function renderAdminCategorieen(el){
   const arr=Object.values(content.categorieen).sort((a,b)=>(a.volgorde||0)-(b.volgorde||0));
   el.innerHTML=`<button class="add-btn" onclick="editCat()">+ Nieuwe categorie</button>`+
-    (arr.length?arr.map(c=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(c.naam_nl)}</div><div class="sub">${escapeHtml(c.slug)}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editCat('${c.id}')">Bewerken</button><button class="btn-danger" onclick="deleteCat('${c.id}','${escapeHtml(c.naam_nl)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen categorieën.</div>');
+    (arr.length?arr.map(c=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(c.naam_nl)}</div><div class="sub">${escapeHtml(c.slug)}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editCat('${c.id}')">Bewerken</button><button class="btn-danger" onclick="deleteCat('${c.id}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen categorieën.</div>');
 }
 function editCat(id){
   const c=id?content.categorieen[id]:{ id:uid(), slug:'', naam_nl:'', naam_en:'', volgorde:Object.keys(content.categorieen).length+1 };
@@ -572,7 +634,7 @@ async function saveCat(id){
   await db.ref('content/categorieen/'+id).set({ id, slug, naam_nl:nl, naam_en:document.getElementById('cEn').value.trim(), volgorde:parseInt(document.getElementById('cVol').value)||1 });
   closeModal(); toast('Categorie opgeslagen');
 }
-async function deleteCat(id,naam){ if(!confirm('Categorie "'+naam+'" verwijderen? Artikels blijven bestaan maar verliezen hun categorie.'))return; await db.ref('content/categorieen/'+id).remove(); toast('Verwijderd'); }
+async function deleteCat(id){ const c=content.categorieen[id]; if(!c)return; if(!confirm('Categorie "'+c.naam_nl+'" verwijderen? Artikels blijven bestaan maar verliezen hun categorie.'))return; await db.ref('content/categorieen/'+id).remove(); toast('Verwijderd'); }
 
 // ---- Keywords ----
 function renderAdminKeywords(el){
@@ -581,12 +643,13 @@ function renderAdminKeywords(el){
   // Suggesties van personeel
   db.ref('keyword-suggesties').once('value').then(snap=>{
     const sug=snap.val()||{};
+    _sugCache=sug;
     const sEl=document.getElementById('kwSuggesties');
     if(!sEl)return;
     const entries=Object.entries(sug);
-    sEl.innerHTML=entries.length? '<h2 style="font-size:13px;color:var(--warning);margin:18px 0 10px;text-transform:uppercase;letter-spacing:0.05em">Voorstellen van personeel</h2>'+entries.map(([k,s])=>`<div class="admin-card"><div class="name">${escapeHtml(s.woord)}</div><div class="sub">${escapeHtml(s.tekst||'')}</div><div class="meta">door ${escapeHtml(s.door||'?')} · ${fmtDate(s.gevraagd)}</div><div class="actions"><button class="btn-ghost" onclick="editKeywordFromSuggestion('${k}','${escapeHtml(s.woord)}')">Keyword aanmaken</button><button class="btn-danger" onclick="dismissSuggestion('${k}')">Negeren</button></div></div>`).join(''):'';
+    sEl.innerHTML=entries.length? '<h2 style="font-size:13px;color:var(--warning);margin:18px 0 10px;text-transform:uppercase;letter-spacing:0.05em">Voorstellen van personeel</h2>'+entries.map(([k,s])=>`<div class="admin-card"><div class="name">${escapeHtml(s.woord)}</div><div class="sub">${escapeHtml(s.tekst||'')}</div><div class="meta">door ${escapeHtml(s.door||'?')} · ${fmtDate(s.gevraagd)}</div><div class="actions"><button class="btn-ghost" onclick="editKeywordFromSuggestion('${k}')">Keyword aanmaken</button><button class="btn-danger" onclick="dismissSuggestion('${k}')">Negeren</button></div></div>`).join(''):'';
   });
-  html+=arr.length?arr.map(k=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(k.woord)}</div><div class="sub">${escapeHtml((k.aliassen||[]).join(', '))}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editKeyword('${k.id}')">Bewerken</button><button class="btn-danger" onclick="deleteKeyword('${k.id}','${escapeHtml(k.woord)}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen keywords.</div>';
+  html+=arr.length?arr.map(k=>`<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(k.woord)}</div><div class="sub">${escapeHtml((k.aliassen||[]).join(', '))}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn-ghost" onclick="editKeyword('${k.id}')">Bewerken</button><button class="btn-danger" onclick="deleteKeyword('${k.id}')">Verwijderen</button></div></div>`).join(''):'<div class="empty-admin">Nog geen keywords.</div>';
   html+='<div id="kwSuggesties"></div>';
   el.innerHTML=html;
 }
@@ -601,7 +664,7 @@ function editKeyword(id, prefillWoord){
       <button class="btn btn-primary" id="kSaveBtn" onclick="saveKeyword('${k.id}')">Opslaan</button>
     </div>`);
 }
-function editKeywordFromSuggestion(sugKey, woord){ editKeyword(null, woord); window._pendingSugKey=sugKey; }
+function editKeywordFromSuggestion(sugKey){ const s=_sugCache[sugKey]; editKeyword(null, s?s.woord:''); window._pendingSugKey=sugKey; }
 async function saveKeyword(id){
   const btn=document.getElementById('kSaveBtn'); btn.disabled=true; btn.textContent='Opslaan...';
   try{
@@ -613,7 +676,7 @@ async function saveKeyword(id){
     closeModal(); toast('Keyword opgeslagen');
   }catch(e){ console.error(e); toast('Opslaan mislukt: '+(e.message||e.code)); btn.disabled=false; btn.textContent='Opslaan'; }
 }
-async function deleteKeyword(id,woord){ if(!confirm('Keyword "'+woord+'" verwijderen?'))return; await db.ref('content/keywords/'+id).remove(); toast('Verwijderd'); }
+async function deleteKeyword(id){ const k=content.keywords[id]; if(!k)return; if(!confirm('Keyword "'+k.woord+'" verwijderen?'))return; await db.ref('content/keywords/'+id).remove(); toast('Verwijderd'); }
 async function dismissSuggestion(key){ await db.ref('keyword-suggesties/'+key).remove(); renderAdmin(); }
 
 // ---- Admin badges (tandwiel + per tab) ----
@@ -650,20 +713,21 @@ async function rejectRequest(slug){ if(!confirm('Aanvraag weigeren?'))return; aw
 // ---- Personeel ----
 function renderAdminPersoneel(el){
   db.ref('whitelist').once('value').then(snap=>{
-    const data=snap.val()||{}; const entries=Object.entries(data).sort((a,b)=>(a[1].naam||'').localeCompare(b[1].naam||''));
+    const data=snap.val()||{}; _personeelCache=data; const entries=Object.entries(data).sort((a,b)=>(a[1].naam||'').localeCompare(b[1].naam||''));
     el.innerHTML=entries.length?entries.map(([slug,p])=>{
       const rolBtn = p.rol==='admin'
-        ? `<button class="btn-ghost" onclick="setRol('${slug}','staff','${escapeHtml(p.naam||p.email)}')">Maak personeel</button>`
-        : `<button class="btn-ghost" onclick="setRol('${slug}','admin','${escapeHtml(p.naam||p.email)}')">Maak admin</button>`;
+        ? `<button class="btn-ghost" onclick="setRol('${slug}','staff')">Maak personeel</button>`
+        : `<button class="btn-ghost" onclick="setRol('${slug}','admin')">Maak admin</button>`;
       const actBtn = p.actief
-        ? `<button class="btn-danger" onclick="setActief('${slug}',false,'${escapeHtml(p.naam||p.email)}')">Toegang intrekken</button>`
+        ? `<button class="btn-danger" onclick="setActief('${slug}',false)">Toegang intrekken</button>`
         : `<button class="btn-ghost" onclick="setActief('${slug}',true)">Heractiveren</button>`;
       return `<div class="admin-card"><div class="row1"><div><div class="name">${escapeHtml(p.naam||'?')} <span class="role-pill ${p.rol}">${p.rol}</span></div><div class="email">${escapeHtml(p.email)}</div></div></div><div class="meta">Toegevoegd ${fmtDate(p.toegevoegd)}${p.lastSeen?' · laatst gezien '+fmtDate(p.lastSeen):' · nog niet ingelogd'}</div><div class="actions">${rolBtn}${actBtn}</div></div>`;
     }).join(''):'<div class="empty-admin">Nog geen personeel.</div>';
   });
 }
-async function setActief(slug,val,naam){ if(!val && !confirm('Toegang intrekken voor '+naam+'?'))return; await db.ref('whitelist/'+slug).update({actief:val}); toast(val?'Geheractiveerd':'Toegang ingetrokken'); renderAdmin(); }
-async function setRol(slug,nieuwRol,naam){
+async function setActief(slug,val){ const naam=(_personeelCache[slug]||{}).naam||slug; if(!val && !confirm('Toegang intrekken voor '+naam+'?'))return; await db.ref('whitelist/'+slug).update({actief:val}); toast(val?'Geheractiveerd':'Toegang ingetrokken'); renderAdmin(); }
+async function setRol(slug,nieuwRol){
+  const p=_personeelCache[slug]||{}; const naam=p.naam||p.email||slug;
   const verb = nieuwRol==='admin' ? 'tot admin promoten' : 'tot personeel terugzetten';
   if(!confirm(naam+' '+verb+'?'))return;
   await db.ref('whitelist/'+slug).update({rol:nieuwRol});
